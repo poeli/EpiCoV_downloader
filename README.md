@@ -2,6 +2,14 @@
 
 This is a GISAID downloader to retrieve all EpiCoV sequences and the table. The script utilies selenium to acess GISAID website through a Firefox webdriver.
 
+
+
+## Requirements
+You may need to install firefox and geckodriver to run the downloader other than selenium.
+
+```conda install -c conda-forge selenium geckodriver firefox```
+
+## Usage
 ```
 usage: gisaid_EpiCoV_download.py [-h] -u [STR] -p [STR] [-o [STR]]
 
@@ -15,4 +23,5 @@ optional arguments:
                         GISAID password
   -o [STR], --outdir [STR]
                         Output directory
+  --headless            Turn on headless mode
 ```
