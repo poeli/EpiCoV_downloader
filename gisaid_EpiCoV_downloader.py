@@ -4,7 +4,6 @@ import argparse as ap
 import os
 import time
 from selenium import webdriver
-from Bio import SeqIO
 
 GISAID_FASTA = 'gisaid_cov2020_sequences.fasta'
 GISAID_TABLE = 'gisaid_cov2020_acknowledgement_table.xls'
