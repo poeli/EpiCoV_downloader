@@ -4,6 +4,7 @@ import argparse as ap
 import os
 import time
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 
 GISAID_FASTA = 'gisaid_cov2020_sequences.fasta'
 GISAID_TABLE = 'gisaid_cov2020_acknowledgement_table.xls'
@@ -24,13 +25,15 @@ def parse_params():
     p.add_argument('-o', '--outdir',
             metavar='[STR]', type=str, required=False, default=None,
                     help="Output directory")
+    p.add_argument('--headless',
+            action='store_true', help='turn on headless mode')
 
     args_parsed = p.parse_args()
     if not args_parsed.outdir:
         args_parsed.outdir = os.getcwd()
     return args_parsed
 
-def download_gisaid_EpiCoV(uname, upass, wd=None):
+def download_gisaid_EpiCoV(uname, upass, headless, wd=None):
     # output directory
     if not os.path.exists(wd):
         os.makedirs(wd, exist_ok=True)
@@ -54,7 +57,11 @@ def download_gisaid_EpiCoV(uname, upass, wd=None):
     profile.set_preference("browser.download.dir", wd)
     profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/octet-stream,application/excel,application/vnd.ms-excel")
     #profile.set_preference("browser.helperApps.alwaysAsk.force", False)
-    driver = webdriver.Firefox(firefox_profile=profile)
+    options = Options()
+    if headless:
+        options.add_argument("--headless")
+    driver = webdriver.Firefox(firefox_profile=profile,options=options)
+    #driver = webdriver.Firefox(firefox_profile=profile)
 
     # open GISAID
     print("Open GISAID...")
@@ -101,7 +108,7 @@ def download_gisaid_EpiCoV(uname, upass, wd=None):
 def main():
     argvs = parse_params()
     print("--- Ingest at " + time.strftime("%H:%M:%S") + " ---")
-    download_gisaid_EpiCoV(argvs.username, argvs.password, argvs.outdir)
+    download_gisaid_EpiCoV(argvs.username, argvs.password, argvs.headless, argvs.outdir)
     print("Completed.")
 
 if __name__ == "__main__":
