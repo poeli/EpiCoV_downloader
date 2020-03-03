@@ -1,7 +1,6 @@
 # GISAID EpiCoV Downloader
 
-This is a GISAID downloader to retrieve all EpiCoV sequences and the table.
-
+This is a GISAID downloader to retrieve all EpiCoV sequences and the table. The script utilies selenium to acess GISAID website through a Firefox webdriver.
 
 ```
 usage: gisaid_EpiCoV_download.py [-h] -u [STR] -p [STR] [-o [STR]]
