@@ -89,10 +89,6 @@ def download_gisaid_EpiCoV(uname, upass, wd=None):
         time.sleep(30)
     if not os.path.isfile(GISAID_FASTA) or not os.path.isfile(GISAID_TABLE):
         time.sleep(30)
-    if not os.path.isfile(GISAID_FASTA) or not os.path.isfile(GISAID_TABLE):
-        time.sleep(30)
-    if not os.path.isfile(GISAID_FASTA) or not os.path.isfile(GISAID_TABLE):
-        time.sleep(30)
     if os.path.isfile(GISAID_FASTA) and os.path.isfile(GISAID_TABLE):
         while (os.stat(GISAID_FASTA).st_size == 0):
             time.sleep(5)
