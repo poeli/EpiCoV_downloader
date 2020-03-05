@@ -25,6 +25,7 @@ def parse_params():
     p.add_argument('-o', '--outdir',
             metavar='[STR]', type=str, required=False, default=None,
                     help="Output directory")
+
     p.add_argument('--headless',
             action='store_true', help='turn on headless mode')
 
@@ -81,15 +82,20 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd=None):
     # navigate to EpiFlu
     print("Navigate to EpiCoV...")
     time.sleep(7)
-    driver.execute_script("return sys.call('c_q6ksdw_4p','Go',new Object({'page':'corona2020'}));")
+    epicov_tab = driver.find_element_by_xpath("//div[@id='main_nav']//li[3]/a")
+    epicov_tab.click()
     time.sleep(7)
-    driver.execute_script("return sys.getC('c_q6ksdw_1db').onclick('ce_q6ksdw_187', '', 'page_corona2020.Corona2020BrowsePage', false)")
+    browse_tab = driver.find_element_by_xpath("//div[@class='sys-actionbar-bar']/div[2]")
+    browse_tab.click()
 
     # download
     print("Downloading...")
     time.sleep(7)
-    driver.execute_script("return sys.getC('c_q6ksdw_1dp').buttonClick('DownloadAllSequences')")
-    driver.execute_script("return sys.getC('c_q6ksdw_1dr').call('DownloadACKTable',{})")
+    button = driver.find_element_by_xpath("/html/body/form/div[5]/div/div[2]/div/div[2]/div[2]/table/tbody/tr/td[3]/button")
+    button.click()
+    elem = driver.find_element_by_xpath("/html/body/form/div[5]/div/div[3]/div[1]/div/center[1]/a")
+    script = elem.get_attribute("onclick")
+    driver.execute_script(f"return {script}")
 
     # wait for download to complete
     if not os.path.isfile(GISAID_FASTA) or not os.path.isfile(GISAID_TABLE):
