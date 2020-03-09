@@ -114,10 +114,9 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
     print("Navigating to EpiCoV...")
     epicov_tab = driver.find_element_by_xpath("//div[@id='main_nav']//li[3]/a")
     epicov_tab.click()
-    time.sleep(5)
+    time.sleep(10)
     print("Browsing EpiCoV...")
-    browse_tab = driver.find_element_by_xpath(
-        "//div[@class='sys-actionbar-bar']/div[2]")
+    browse_tab = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[contains(text(), "Browse")]')));
     browse_tab.click()
     time.sleep(5)
 
