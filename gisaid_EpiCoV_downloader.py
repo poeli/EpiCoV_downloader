@@ -85,7 +85,6 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
     profile.set_preference("browser.download.dir", wd)
     profile.set_preference("browser.helperApps.neverAsk.saveToDisk",
                            "application/octet-stream,application/excel,application/vnd.ms-excel")
-    #profile.set_preference("browser.helperApps.alwaysAsk.force", False)
     options = Options()
     if headless:
         options.add_argument("--headless")
@@ -115,8 +114,16 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
     epicov_tab = driver.find_element_by_xpath("//div[@id='main_nav']//li[3]/a")
     epicov_tab.click()
     time.sleep(10)
+
+    # print("Downloading preliminary analysis summary...")
+    # dl_button = wait.until(EC.element_to_be_clickable(
+    #     (By.XPATH, '//a[contains(text(), "download")]')))
+    # dl_button.click()
+    # time.sleep(1)
+
     print("Browsing EpiCoV...")
-    browse_tab = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[contains(text(), "Browse")]')));
+    browse_tab = wait.until(EC.element_to_be_clickable(
+        (By.XPATH, '//*[contains(text(), "Browse")]')))
     browse_tab.click()
     time.sleep(5)
 
@@ -154,6 +161,7 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
 
             for tr in tbody.find_elements_by_tag_name("tr"):
                 td = tr.find_element_by_tag_name("td")
+                driver.execute_script("arguments[0].scrollIntoView();", td)
                 td.click()
 
                 # have to click the first row twice to start the iframe
