@@ -154,34 +154,48 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
         "/html/body/form/div[5]/div/div[3]/div[1]/div/center[1]/a")
     script = elem.get_attribute("onclick")
     driver.execute_script(f"return {script}")
-    time.sleep(7)
 
     # iterate each pages
     if meta_dl:
         page_num = 1
         print("Retrieving metadata...")
         while True:
-            tbody = wait.until(
-                EC.presence_of_element_located(
-                    (By.XPATH, "//tbody[@class='yui-dt-data']"))
-            )
+            print(f"Starting processing page# {page_num}...")
 
+            # retrieve tables
+            retry = 1
+            while retry <= 5:
+                try:
+                    time.sleep(10)
+                    tbody = wait.until(
+                        EC.presence_of_element_located(
+                            (By.XPATH, "//tbody[@class='yui-dt-data']"))
+                    )
+                    break
+                except:
+                    print(f"retrying...#{retry}")
+                    time.sleep(0.5)
+                    retry += 1
+
+            # interate each row
             for tr in tbody.find_elements_by_tag_name("tr"):
                 td = tr.find_element_by_tag_name("td")
                 driver.execute_script("arguments[0].scrollIntoView();", td)
-                td.click()
 
                 # have to click the first row twice to start the iframe
                 iframe = None
-                try:
-                    iframe = wait.until(
-                        EC.presence_of_element_located((By.TAG_NAME, "iframe"))
-                    )
-                except:
-                    td.click()
-                    iframe = wait.until(
-                        EC.presence_of_element_located((By.TAG_NAME, "iframe"))
-                    )
+                retry = 1
+                while retry <= 5:
+                    try:
+                        td.click()
+                        iframe = wait.until(
+                            EC.presence_of_element_located((By.TAG_NAME, "iframe"))
+                        )
+                        break
+                    except:
+                        print(f"retrying...#{retry}")
+                        time.sleep(0.5)
+                        retry += 1
 
                 #iframe = driver.find_element_by_tag_name("iframe")
                 driver.switch_to.frame(iframe)
@@ -194,13 +208,14 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
                 time.sleep(0.5)
                 m = getMetadata(record_elem)
                 metadata.append(m)
+                print(f"{m['Accession ID']}\t{m['Virus name']}")
 
                 # get back
                 ActionChains(driver).send_keys(Keys.ESCAPE).perform()
                 time.sleep(1)
                 driver.switch_to.default_content()
 
-            print(f"Page {page_num} compeleted.")
+            print(f"Compeleted page# {page_num}.")
             page_num += 1
 
             # go to the next page
@@ -208,7 +223,6 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
                 button_next_page = driver.find_element_by_css_selector(
                     "a.yui-pg-next")
                 button_next_page.click()
-                time.sleep(5)
             except:
                 break
 
