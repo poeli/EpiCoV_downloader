@@ -12,9 +12,6 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-GISAID_FASTA = 'gisaid_cov2020_sequences.fasta'
-GISAID_TABLE = 'gisaid_cov2020_acknowledgement_table.xls'
-
 
 def parse_params():
     p = ap.ArgumentParser(prog='gisaid_EpiCoV_download.py',
@@ -71,6 +68,11 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
     GISAID_JASON = f'{wd}/gisaid_cov2020_metadata.json'
     metadata = []
 
+    # MIME types
+    mime_types = "application/octet-stream"
+    mime_types += ",application/excel,application/vnd.ms-excel"
+    mime_types += ",application/pdf,application/x-pdf"
+
     # start fresh
     try:
         os.remove(GISAID_FASTA)
@@ -83,8 +85,12 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
     profile.set_preference("browser.download.folderList", 2)
     profile.set_preference("browser.download.manager.showWhenStarting", False)
     profile.set_preference("browser.download.dir", wd)
-    profile.set_preference("browser.helperApps.neverAsk.saveToDisk",
-                           "application/octet-stream,application/excel,application/vnd.ms-excel")
+    profile.set_preference(
+        "browser.helperApps.neverAsk.saveToDisk", mime_types)
+    profile.set_preference(
+        "plugin.disable_full_page_plugin_for_types", mime_types)
+    profile.set_preference("pdfjs.disabled", True)
+
     options = Options()
     if headless:
         options.add_argument("--headless")
@@ -115,11 +121,12 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
     epicov_tab.click()
     time.sleep(10)
 
-    # print("Downloading preliminary analysis summary...")
-    # dl_button = wait.until(EC.element_to_be_clickable(
-    #     (By.XPATH, '//a[contains(text(), "download")]')))
-    # dl_button.click()
-    # time.sleep(1)
+    # Downloading preliminary analysis summary PDF
+    print("Downloading preliminary analysis summary...")
+    dl_button = wait.until(EC.element_to_be_clickable(
+        (By.XPATH, '//a[contains(text(), "download")]')))
+    dl_button.click()
+    time.sleep(3)
 
     print("Browsing EpiCoV...")
     browse_tab = wait.until(EC.element_to_be_clickable(
