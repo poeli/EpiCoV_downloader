@@ -176,6 +176,7 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
                         (By.XPATH, "//div[@class='packer']"))
                 )
                 # get metadata
+                time.sleep(0.5)
                 m = getMetadata(record_elem)
                 metadata.append(m)
 
