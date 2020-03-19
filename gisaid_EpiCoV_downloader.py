@@ -2,6 +2,7 @@
 
 import os
 import time
+import sys
 import argparse as ap
 import json
 from selenium import webdriver
@@ -14,7 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 
 def parse_params():
-    p = ap.ArgumentParser(prog='gisaid_EpiCoV_download.py',
+    p = ap.ArgumentParser(prog='gisaid_EpiCoV_downloader.py',
                           description="""Download all EpiCoV sequcnes from GISAID""")
 
     p.add_argument('-u', '--username',
@@ -45,6 +46,18 @@ def parse_params():
                    metavar='[YYYY-MM-DD]', type=str, required=False, default=None,
                    help="submitssion ends date")
 
+    p.add_argument('-t', '--timeout',
+                   metavar='[INT]', type=int, required=False, default=90,
+                   help="set action timeout seconds. Default is 90 secs.")
+
+    p.add_argument('-r', '--retry',
+                   metavar='[INT]', type=int, required=False, default=5,
+                   help="retry how many times when the action fails. Default is 5 times.")
+
+    p.add_argument('-i', '--interval',
+                   metavar='[INT]', type=int, required=False, default=3,
+                   help="time interval between retries in second(s). Default is 3 seconds.")
+
     p.add_argument('-m', '--meta',
                    action='store_true', help='download metadata')
 
@@ -57,7 +70,9 @@ def parse_params():
     return args_parsed
 
 
-def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
+def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, to, rt, iv, meta_dl):
+    """Download sequences and metadata from EpiCoV GISAID"""
+
     # output directory
     if not os.path.exists(wd):
         os.makedirs(wd, exist_ok=True)
@@ -97,12 +112,13 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
     driver = webdriver.Firefox(firefox_profile=profile, options=options)
 
     # driverwait
-    wait = WebDriverWait(driver, 10)
+    driver.implicitly_wait(20)
+    wait = WebDriverWait(driver, to)
 
     # open GISAID
     print("Opening website GISAID...")
     driver.get('https://platform.gisaid.org/epi3/frontend')
-    time.sleep(7)
+    waiting_sys_timer(wait)
     print(driver.title)
     assert 'GISAID' in driver.title
 
@@ -113,26 +129,30 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
     password = driver.find_element_by_name('password')
     password.send_keys(upass)
     driver.execute_script("return doLogin();")
-    time.sleep(10)
+    
+    waiting_sys_timer(wait)
+
 
     # navigate to EpiFlu
     print("Navigating to EpiCoV...")
     epicov_tab = driver.find_element_by_xpath("//div[@id='main_nav']//li[3]/a")
     epicov_tab.click()
-    time.sleep(10)
+    
+    waiting_sys_timer(wait)
 
     # Downloading preliminary analysis summary PDF
     print("Downloading preliminary analysis summary...")
     dl_button = wait.until(EC.element_to_be_clickable(
         (By.XPATH, '//a[contains(text(), "download")]')))
     dl_button.click()
-    time.sleep(3)
+    waiting_sys_timer(wait)
 
     print("Browsing EpiCoV...")
     browse_tab = wait.until(EC.element_to_be_clickable(
         (By.XPATH, '//*[contains(text(), "Browse")]')))
     browse_tab.click()
-    time.sleep(5)
+    waiting_sys_timer(wait)
+    waiting_table_to_get_ready(wait)
 
     # set dates
     date_inputs = driver.find_elements_by_css_selector(
@@ -143,17 +163,30 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
             dinput.send_keys(date)
 
     ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-    time.sleep(5)
+    waiting_sys_timer(wait, 7)
 
-    # download
+    # download fasta
     print("Downloading the sequence file and the table...")
-    button = driver.find_element_by_xpath(
-        "/html/body/form/div[5]/div/div[2]/div/div[2]/div[2]/table/tbody/tr/td[3]/button")
-    button.click()
-    elem = driver.find_element_by_xpath(
-        "/html/body/form/div[5]/div/div[3]/div[1]/div/center[1]/a")
-    script = elem.get_attribute("onclick")
-    driver.execute_script(f"return {script}")
+    retry = 0
+    while retry <= rt:
+        try:
+            button = driver.find_element_by_xpath(
+                "/html/body/form/div[5]/div/div[2]/div/div[2]/div[2]/table/tbody/tr/td[3]/button")
+            button.click()
+            elem = driver.find_element_by_xpath(
+                "/html/body/form/div[5]/div/div[3]/div[1]/div/center[1]/a")
+            script = elem.get_attribute("onclick")
+            driver.execute_script(f"return {script}")
+            break
+        except:
+            print(f"retrying...#{retry} in {iv} sec(s)")
+            if retry == rt:
+                print("Failed")
+                sys.exit(1)
+            else:
+                time.sleep(iv)
+                retry += 1
+
 
     # iterate each pages
     if meta_dl:
@@ -161,21 +194,13 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
         print("Retrieving metadata...")
         while True:
             print(f"Starting processing page# {page_num}...")
-
             # retrieve tables
-            retry = 1
-            while retry <= 5:
-                try:
-                    time.sleep(10)
-                    tbody = wait.until(
-                        EC.presence_of_element_located(
-                            (By.XPATH, "//tbody[@class='yui-dt-data']"))
-                    )
-                    break
-                except:
-                    print(f"retrying...#{retry}")
-                    time.sleep(0.5)
-                    retry += 1
+            tbody = wait.until(
+                EC.presence_of_element_located(
+                    (By.XPATH, "//tbody[@class='yui-dt-data']"))
+            )
+
+            waiting_table_to_get_ready(wait)
 
             # interate each row
             for tr in tbody.find_elements_by_tag_name("tr"):
@@ -184,28 +209,45 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
 
                 # have to click the first row twice to start the iframe
                 iframe = None
+                record_elem = None
                 retry = 1
-                while retry <= 5:
+                while retry <= rt:
                     try:
                         td.click()
-                        iframe = wait.until(
-                            EC.presence_of_element_located((By.TAG_NAME, "iframe"))
-                        )
-                        break
+                        waiting_sys_timer(wait)
+                        iframe = driver.find_element_by_xpath("//iframe")
+                        if iframe:
+                            break
+                        else:
+                            raise
                     except:
-                        print(f"retrying...#{retry}")
-                        time.sleep(0.5)
-                        retry += 1
+                        print(f"retrying...#{retry} in {iv} sec(s)")
+                        if retry == rt:
+                            print("Failed")
+                            sys.exit(1)
+                        else:
+                            time.sleep(iv)
+                            retry += 1
 
-                #iframe = driver.find_element_by_tag_name("iframe")
                 driver.switch_to.frame(iframe)
 
+                # detect error: "An internal server error occurred."
+                # and "error-token: DYX47"
+                error_token = driver.find_element_by_xpath("//b")
+                if error_token:
+                    error_token_text = error_token.text
+                    if "error-token" in error_token.text:
+                        print("[FATAL ERROR] A website internal server error occurred.")
+                        print(error_token_text)
+                        sys.exit(1)
+
+                # get the element of table with metadata               
                 record_elem = wait.until(
                     EC.presence_of_element_located(
                         (By.XPATH, "//div[@class='packer']"))
                 )
-                # get metadata
-                time.sleep(0.5)
+
+                # parse metadata
                 m = getMetadata(record_elem)
                 metadata.append(m)
                 print(f"{m['Accession ID']}\t{m['Virus name']}")
@@ -219,12 +261,32 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
             page_num += 1
 
             # go to the next page
+            retry = 1
+            button_next_page = None
             try:
-                button_next_page = driver.find_element_by_css_selector(
-                    "a.yui-pg-next")
-                button_next_page.click()
+                button_next_page = driver.find_element_by_xpath(f'//a[@page="{page_num}"]')
             except:
                 break
+            
+            if button_next_page:
+                print(f"Entering page# {page_num}...")
+                while retry <= rt:
+                    try:
+                        button_next_page.click()
+                        time.sleep(10)
+                        current_page = driver.find_element_by_xpath('//span[@class="yui-pg-current-page yui-pg-page"]').text
+                        if current_page != str(page_num):
+                            raise
+                        else:
+                            break
+                    except:
+                        print(f"retrying...#{retry} in {iv} sec(s)")
+                        if retry == rt:
+                            print("Failed")
+                            sys.exit(1)
+                        else:
+                            time.sleep(iv)
+                            retry += 1
 
         # writing metadata to JSON file
         print("Writing metadata...")
@@ -247,6 +309,7 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, meta_dl):
 
 
 def getMetadata(record_elem):
+    """parse out metadata from the table"""
     meta = {}
     table = record_elem.find_element_by_tag_name("table")
     last_attr = ""
@@ -268,6 +331,16 @@ def getMetadata(record_elem):
     return meta
 
 
+def waiting_sys_timer(wait, sec=1):
+    """wait for system timer"""
+    wait.until(EC.invisibility_of_element_located((By.XPATH,  "//div[@id='sys_timer']")))
+    time.sleep(sec)
+
+def waiting_table_to_get_ready(wait, sec=1):
+    """wait for the table to be loaded"""
+    wait.until(EC.invisibility_of_element_located((By.XPATH,  "//tbody[@class='yui-dt-message']")))
+    time.sleep(sec)
+
 def main():
     argvs = parse_params()
     print(f"--- Ingest at {time.strftime('%Y-%m-%d %H:%M:%S')} ---")
@@ -280,6 +353,9 @@ def main():
         argvs.colend,
         argvs.substart,
         argvs.subend,
+        argvs.timeout,
+        argvs.retry,
+        argvs.interval,
         argvs.meta
     )
     print("Completed.")
