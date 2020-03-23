@@ -129,15 +129,14 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, to, rt, i
     password = driver.find_element_by_name('password')
     password.send_keys(upass)
     driver.execute_script("return doLogin();")
-    
-    waiting_sys_timer(wait)
 
+    waiting_sys_timer(wait)
 
     # navigate to EpiFlu
     print("Navigating to EpiCoV...")
     epicov_tab = driver.find_element_by_xpath("//div[@id='main_nav']//li[3]/a")
     epicov_tab.click()
-    
+
     waiting_sys_timer(wait)
 
     # Downloading preliminary analysis summary PDF
@@ -166,17 +165,24 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, to, rt, i
     waiting_sys_timer(wait, 7)
 
     # download fasta
-    print("Downloading the sequence file and the table...")
     retry = 0
     while retry <= rt:
         try:
+            print("Downloading the sequence file...")
             button = driver.find_element_by_xpath(
                 "/html/body/form/div[5]/div/div[2]/div/div[2]/div[2]/table/tbody/tr/td[3]/button")
             button.click()
+            waiting_sys_timer(wait)
+            if not download_finished(GISAID_FASTA, 180):
+                raise
+            print("Downloading the acknowledgement table...")
             elem = driver.find_element_by_xpath(
                 "/html/body/form/div[5]/div/div[3]/div[1]/div/center[1]/a")
             script = elem.get_attribute("onclick")
             driver.execute_script(f"return {script}")
+            waiting_sys_timer(wait)
+            if not download_finished(GISAID_TABLE, 180):
+                raise
             break
         except:
             print(f"retrying...#{retry} in {iv} sec(s)")
@@ -186,7 +192,6 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, to, rt, i
             else:
                 time.sleep(iv)
                 retry += 1
-
 
     # iterate each pages
     if meta_dl:
@@ -237,11 +242,12 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, to, rt, i
                 if error_token:
                     error_token_text = error_token.text
                     if "error-token" in error_token.text:
-                        print("[FATAL ERROR] A website internal server error occurred.")
+                        print(
+                            "[FATAL ERROR] A website internal server error occurred.")
                         print(error_token_text)
                         sys.exit(1)
 
-                # get the element of table with metadata               
+                # get the element of table with metadata
                 record_elem = wait.until(
                     EC.presence_of_element_located(
                         (By.XPATH, "//div[@class='packer']"))
@@ -264,17 +270,19 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, to, rt, i
             retry = 1
             button_next_page = None
             try:
-                button_next_page = driver.find_element_by_xpath(f'//a[@page="{page_num}"]')
+                button_next_page = driver.find_element_by_xpath(
+                    f'//a[@page="{page_num}"]')
             except:
                 break
-            
+
             if button_next_page:
                 print(f"Entering page# {page_num}...")
                 while retry <= rt:
                     try:
                         button_next_page.click()
                         time.sleep(10)
-                        current_page = driver.find_element_by_xpath('//span[@class="yui-pg-current-page yui-pg-page"]').text
+                        current_page = driver.find_element_by_xpath(
+                            '//span[@class="yui-pg-current-page yui-pg-page"]').text
                         if current_page != str(page_num):
                             raise
                         else:
@@ -333,13 +341,27 @@ def getMetadata(record_elem):
 
 def waiting_sys_timer(wait, sec=1):
     """wait for system timer"""
-    wait.until(EC.invisibility_of_element_located((By.XPATH,  "//div[@id='sys_timer']")))
+    wait.until(EC.invisibility_of_element_located(
+        (By.XPATH,  "//div[@id='sys_timer']")))
     time.sleep(sec)
+
 
 def waiting_table_to_get_ready(wait, sec=1):
     """wait for the table to be loaded"""
-    wait.until(EC.invisibility_of_element_located((By.XPATH,  "//tbody[@class='yui-dt-message']")))
+    wait.until(EC.invisibility_of_element_located(
+        (By.XPATH,  "//tbody[@class='yui-dt-message']")))
     time.sleep(sec)
+
+
+def download_finished(file, timeout=60):
+    sec = 0
+    while sec < timeout:
+        if os.path.exists(file):
+            return True
+        else:
+            sec += 1
+    return False
+
 
 def main():
     argvs = parse_params()
