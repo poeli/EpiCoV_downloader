@@ -11,10 +11,11 @@ $ conda install -c conda-forge selenium geckodriver firefox
 
 ## Usage
 ```bash
-usage: gisaid_EpiCoV_download.py [-h] -u [STR] -p [STR] [-o [STR]]
-                                 [-cs [YYYY-MM-DD]] [-ce [YYYY-MM-DD]]
-                                 [-ss [YYYY-MM-DD]] [-se [YYYY-MM-DD]] [-m]
-                                 [--headless]
+usage: gisaid_EpiCoV_downloader.py [-h] -u [STR] -p [STR] [-o [STR]]
+                                   [-cs [YYYY-MM-DD]] [-ce [YYYY-MM-DD]]
+                                   [-ss [YYYY-MM-DD]] [-se [YYYY-MM-DD]] [-cg]
+                                   [-hc] [-t [INT]] [-r [INT]] [-i [INT]] [-m]
+                                   [--headless]
 
 Download all EpiCoV sequcnes from GISAID
 
@@ -34,6 +35,16 @@ optional arguments:
                         submitssion starts date
   -se [YYYY-MM-DD], --subend [YYYY-MM-DD]
                         submitssion ends date
+  -cg, --complete       complete genome only
+  -hc, --highcoverage   high coverage only
+  -t [INT], --timeout [INT]
+                        set action timeout seconds. Default is 90 secs.
+  -r [INT], --retry [INT]
+                        retry how many times when the action fails. Default is
+                        5 times.
+  -i [INT], --interval [INT]
+                        time interval between retries in second(s). Default is
+                        3 seconds.
   -m, --meta            download metadata
   --headless            turn on headless mode
 ```
