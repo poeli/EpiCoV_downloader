@@ -188,11 +188,24 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
         try:
             print("Downloading the sequence file...")
             button = driver.find_element_by_xpath(
-                "/html/body/form/div[5]/div/div[2]/div/div[2]/div[2]/table/tbody/tr/td[3]/button")
+                "//div[@class='sys-datatable-dropup']/button")
             button.click()
             waiting_sys_timer(wait)
             if not download_finished(GISAID_FASTA, 180):
                 raise
+            break
+        except:
+            print(f"retrying...#{retry} in {iv} sec(s)")
+            if retry == rt:
+                print("Failed")
+                sys.exit(1)
+            else:
+                time.sleep(iv)
+                retry += 1
+
+    retry = 0
+    while retry <= rt:        
+        try:
             print("Downloading the acknowledgement table...")
             elem = driver.find_element_by_xpath(
                 "/html/body/form/div[5]/div/div[3]/div[1]/div/center[1]/a")
