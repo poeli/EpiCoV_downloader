@@ -3,7 +3,7 @@
 This is a GISAID downloader to retrieve all EpiCoV sequences and the table. The script utilizes Selenium to acess the GISAID website through a Firefox webdriver.
 
 ## Requirements
-You may need to install Firefox and geckodriver to run the downloader other than selenium. Below is an example using conda:
+You may need to install Firefox and geckodriver to run the downloader other than Selenium. Below is an example using conda:
 
 ```bash
 $ conda install -c conda-forge selenium geckodriver firefox
@@ -28,13 +28,13 @@ optional arguments:
   -o [STR], --outdir [STR]
                         Output directory
   -cs [YYYY-MM-DD], --colstart [YYYY-MM-DD]
-                        collection starts date
+                        collection start date
   -ce [YYYY-MM-DD], --colend [YYYY-MM-DD]
-                        collection ends date
+                        collection end date
   -ss [YYYY-MM-DD], --substart [YYYY-MM-DD]
-                        submitssion starts date
+                        submission start date
   -se [YYYY-MM-DD], --subend [YYYY-MM-DD]
-                        submitssion ends date
+                        submission end date
   -cg, --complete       complete genome only
   -hc, --highcoverage   high coverage only
   -t [INT], --timeout [INT]
