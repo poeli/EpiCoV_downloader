@@ -115,67 +115,81 @@ def fill_EpiCoV_upload(uname, upass, seq, metadata, to, rt, iv, headless):
     upload_tab.click()
     waiting_sys_timer(wait)
 
+    iframe = None
+    retry = 1
+    while retry <= rt:
+        try:
+            iframe = driver.find_element_by_xpath("//iframe")
+            if iframe:
+                break
+            else:
+                raise
+        except:
+            print(f"retrying...#{retry} in {iv} sec(s)")
+            if retry == rt:
+                print("Failed")
+                sys.exit(1)
+            else:
+                time.sleep(iv)
+                retry += 1
+    
+    driver.switch_to.frame(iframe)
+
+    button = wait.until(
+        EC.presence_of_element_located(
+            (By.XPATH, "//td[1]"))
+    )
+    #button = driver.find_element_by_xpath('//td[1]')
+    button.click()
+
+    driver.switch_to.default_content()
+    waiting_sys_timer(wait)
+
     # keyword mapping
     entry_keys_mapping = {
-        "ah": "sample_name", #Virus name*: hCoV-19/Country/Identifier/2020
-        "ak": "", #Passage details/history*: Example: Original, Vero
-        "am": "collection_date", #Collection date* Example: 2020-04-01
-        "an": "", #location*: Continent / Country / Region
-        "ao": "", #Additional location information: Example: Cave, Live animal market
-        "ap": "host", #Host*
-        "aq": "", #Additional host information: Example: Cruise Ship, Convention, Live animal market
-        "ar": "gender", #Gender*
-        "as": "age", #Patient age*
-        "at": "", #Patient status: Example: Hospitalized, Released, Live, Deceased, unknown
-        "au": "isolation_source", #Specimen source: Example: Nasal
-        "av": "", #Outbreak Detail: Example: Date, Place, Family cluster
-        "aw": "", #Last vaccinated
-        "ax": "", #Treatment: Example: Include drug name, dosage
-        "ay": "sequencer", #Sequencing technology: Nanopore MinION
-        "az": "", #Assembly method
-        "b0": "", #Coverage
-        "b4": "", #Originating lab*
-        "b5": "location", #Originating lab address*
-        "b6": "", #Sample ID given by the provider
-        "b7": "sequencing_center", #Submitting lab*: Los Alamos National Lab
-            # city=Los Alamos
-            # state=NM
-            # country=USA
-        "b8": "", #Submitting lab address*
-        "b9": "", #Sample ID given by the Submitting lab
-        "ba": "", #Authors*
-        "bg": "", #Submitter information: address
-        "bi": "sequence" #custom
-    }
-
-    requirement_entry_status = {
-        "ah": True, #Virus name*: hCoV-19/Country/Identifier/2020
-        "ak": True, #Passage details/history*: Example: Original, Vero
-        "am": True, #Collection date* Example: 2020-04-01
-        "an": True, #location*: Continent / Country / Region
-        "ap": True, #Host*
-        "ar": True, #Gender*
-        "as": True, #Patient age*
-        "b4": True, #Originating lab*
-        "b5": True, #Originating lab address*
-        "b7": True, #Submitting lab*: Los Alamos National Lab
-        "b8": True, #Submitting lab address*
-        "ba": True, #Authors*
+        # text
+        0  : "virus_name", #Virus name*: hCoV-19/Country/Identifier/2020
+        1  : "virus_passage", #Passage details/history*: Example: Original, Vero
+        2  : "collection_date", #Collection date* Example: 2020-04-01
+        3  : "location", #location*: Continent / Country / Region
+        4  : "", #Additional location information: Example: Cave, Live animal market
+        5  : "host", #Host*
+        6  : "", #Additional host information: Example: Cruise Ship, Convention, Live animal market
+        7  : "gender", #Gender*
+        8  : "age", #Patient age*
+        9  : "", #Patient status: Example: Hospitalized, Released, Live, Deceased, unknown
+        10 : "isolation_source", #Specimen source: Example: Nasal
+        11 : "", #Outbreak Detail: Example: Date, Place, Family cluster
+        12 : "", #Last vaccinated
+        13 : "", #Treatment: Example: Include drug name, dosage
+        14 : "", #Sequencing technology: Nanopore MinION
+        15 : "assembly_method", #Assembly method
+        16 : "coverage", #Coverage
+        17 : "", #Sample ID given by the provider
+        18 : "", #Sample ID given by the Submitting lab
+        # textarea
+        19 : "originating_lab", #Originating lab*
+        20 : "originating_address", #Originating lab address*
+        21 : "submitting_lab", #Submitting lab*: Los Alamos National Lab
+        22 : "submitting_address", #Submitting lab address*
+        23 : "authors", #Authors*
+        24 : "", #Submitter information: address
+        25 : "sequence" #custom
     }
 
     # fill the webform
     text_inputs = driver.find_elements_by_xpath("//input[@type='text']")
     textareas = driver.find_elements_by_xpath("//textarea")
 
+    num = 0
     for inputs in text_inputs, textareas:
         for text_input in inputs:
-            val = text_input.get_attribute("id")
-            if val.endswith("_entry"):
-                entry_key = val.split("_")[2]
-                if entry_key in entry_keys_mapping:
-                    meta_key = entry_keys_mapping[entry_key]
-                    if meta_key and metadata[meta_key]:
-                        text_input.send_keys(metadata[meta_key])
+            meta_key = entry_keys_mapping[num]
+            if meta_key and meta_key in metadata:
+                text_input.send_keys(metadata[meta_key])
+            num += 1
+    
+    waiting_sys_timer(wait)
 
     if not headless:
         # wait until the user to close browser
