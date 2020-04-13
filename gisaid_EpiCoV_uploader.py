@@ -202,7 +202,7 @@ def fill_EpiCoV_upload(uname, upass, seq, metadata, to, rt, iv, headless):
                 break
             time.sleep(1)
     else:
-        button = driver.find_element_by_xpath('//button/img[contains(text(), "Submit for Review")]')
+        button = driver.find_element_by_xpath('//button[contains(text(), "Submit for Review")]')
         button.click()
         waiting_sys_timer(wait)
         
