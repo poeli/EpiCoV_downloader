@@ -186,9 +186,15 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
     retry = 0
     while retry <= rt:
         try:
+            print("Selecting all sequences...")
+            # select all
+            button_sa = driver.find_element_by_css_selector("span.yui-dt-label input")
+            button_sa.click()
+            waiting_sys_timer(wait)
+ 
             print("Downloading the sequence file...")
             button = driver.find_element_by_xpath(
-                "//div[@class='sys-datatable-dropup']/button")
+                "//td[@class='sys-datatable-info']/button")
             button.click()
             waiting_sys_timer(wait)
             if not download_finished(GISAID_FASTA, 180):
