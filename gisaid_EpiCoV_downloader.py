@@ -147,16 +147,10 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
 
     waiting_sys_timer(wait)
 
-    # Downloading preliminary analysis summary PDF
-    print("Downloading analysis update pdf...")
-    dl_button = driver.find_element_by_xpath('//div[contains(text(), "analysis update.pdf")]')
-    driver.execute_script("arguments[0].scrollIntoView();", dl_button)
-    dl_button.click()
-    waiting_sys_timer(wait)
-
     # download from partner downloads
     print("Clicking partner downloads...")
     pd_button = driver.find_element_by_xpath('//div[contains(text(), "partner downloads")]')
+    driver.execute_script("arguments[0].scrollIntoView();", pd_button)
 
     # have to click the first row twice to start the iframe
     iframe = None
@@ -197,12 +191,10 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
         (By.XPATH, '//button[contains(text(), "Back")]')))
     back_button.click()
 
-    driver.switch_to.default_content()
+    while not os.path.isfile(GISAID_FASTA) or not os.path.isfile(GISAID_TSV):
+        time.sleep(5)
 
-    if not os.path.isfile(GISAID_FASTA) or not os.path.isfile(GISAID_TSV):
-        time.sleep(30)
-    if not os.path.isfile(GISAID_FASTA) or not os.path.isfile(GISAID_TSV):
-        time.sleep(30)
+    driver.switch_to.default_content()
 
     if (cs and ce) or (ss and se):
         print("Browsing EpiCoV...")
