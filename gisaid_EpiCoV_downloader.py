@@ -177,13 +177,13 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
     
     print("Downloading sequences.fasta.bz2...")
     dl_button = wait.until(EC.element_to_be_clickable(
-        (By.XPATH, '//div[contains(text(), "sequences.fasta.bz2")]')))
+        (By.XPATH, '//div[contains(text(), "nextfasta")]')))
     dl_button.click()
     waiting_sys_timer(wait)
 
     print("Downloading metadata.tsv.bz2...")
     dl_button = wait.until(EC.element_to_be_clickable(
-        (By.XPATH, '//div[contains(text(), "metadata.tsv.bz2")]')))
+        (By.XPATH, '//div[contains(text(), "nextmeta")]')))
     dl_button.click()
     waiting_sys_timer(wait)
 
