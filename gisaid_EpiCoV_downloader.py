@@ -171,10 +171,10 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
             else:
                 time.sleep(iv)
                 retry += 1
-    
+
     driver.switch_to.frame(iframe)
     waiting_sys_timer(wait)
-    
+
     print("Downloading sequences.fasta.bz2...")
     dl_button = wait.until(EC.element_to_be_clickable(
         (By.XPATH, '//div[contains(text(), "nextfasta")]')))
@@ -191,7 +191,7 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
         (By.XPATH, '//button[contains(text(), "Back")]')))
     back_button.click()
 
-    while not os.path.isfile(GISAID_FASTA) or not os.path.isfile(GISAID_TSV):
+    while not os.path.isfile(GISAID_FASTA) and not os.path.isfile(GISAID_TSV):
         time.sleep(5)
 
     driver.switch_to.default_content()
@@ -236,7 +236,7 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
                 button_sa = driver.find_element_by_css_selector("span.yui-dt-label input")
                 button_sa.click()
                 waiting_sys_timer(wait)
-    
+
                 print("Downloading the sequence file...")
                 button = driver.find_element_by_xpath(
                     "//td[@class='sys-datatable-info']/button")
@@ -255,7 +255,7 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
                     retry += 1
 
         retry = 0
-        while retry <= rt:        
+        while retry <= rt:
             try:
                 print("Downloading the acknowledgement table...")
                 elem = driver.find_element_by_xpath(
