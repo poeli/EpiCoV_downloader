@@ -99,7 +99,9 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
     # start fresh
     try:
         os.remove(GISAID_FASTA)
+        os.remove(f'{GISAID_FASTA}.part')
         os.remove(GISAID_TSV)
+        os.remove(f'{GISAID_TSV}.part')
     except OSError:
         pass
 
@@ -191,7 +193,8 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
         (By.XPATH, '//button[contains(text(), "Back")]')))
     back_button.click()
 
-    while not os.path.isfile(GISAID_FASTA) and not os.path.isfile(GISAID_TSV):
+    # wait for completely downloading files
+    while os.path.isfile(f'{GISAID_FASTA}.part') or os.path.isfile(f'{GISAID_TSV}.part'):
         time.sleep(5)
 
     driver.switch_to.default_content()
