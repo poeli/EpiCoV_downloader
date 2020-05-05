@@ -151,8 +151,10 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
 
     # download from downloads section
     print("Clicking downloads...")
-    pd_button = driver.find_element_by_xpath('//div[contains(text(), "downloads")]')
-    driver.execute_script("arguments[0].scrollIntoView();", pd_button)
+    pd_button = wait.until(EC.element_to_be_clickable(
+        (By.XPATH, "//div[@class='sys-actionbar-bar']//div[3]")))
+
+    #driver.execute_script("arguments[0].scrollIntoView();", pd_button)
 
     # have to click the first row twice to start the iframe
     iframe = None
