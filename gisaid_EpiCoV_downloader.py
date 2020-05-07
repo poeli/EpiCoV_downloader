@@ -80,8 +80,8 @@ def parse_params():
     p.add_argument('-m', '--meta',
                    action='store_true', help='download detail metadata (experimental, very slow)')
 
-    p.add_argument('--headless',
-                   action='store_true', help='turn on headless mode (no x-window needs)')
+    p.add_argument('--normal',
+                   action='store_true', help='run firefox in normal mode.')
 
     args_parsed = p.parse_args()
     if not args_parsed.outdir:
@@ -92,7 +92,7 @@ def parse_params():
 def download_gisaid_EpiCoV(
         uname,     # username
         upass,     # password
-        headless,  # headless mode (quite)
+        normal,  # normal mode (quite)
         wd,        # output dir
         loc,       # location
         cs,        # collection start date
@@ -145,7 +145,7 @@ def download_gisaid_EpiCoV(
     profile.set_preference("pdfjs.disabled", True)
 
     options = Options()
-    if headless:
+    if not normal:
         options.add_argument("--headless")
     driver = webdriver.Firefox(firefox_profile=profile, options=options)
 
@@ -526,19 +526,21 @@ def wait_downloaded_filename(wait, driver, waitTime=180):
     wait.until(EC.new_window_is_opened)
     driver.switch_to.window(driver.window_handles[-1])
     driver.get("about:downloads")
+    time.sleep(1)
 
     endTime = time.time()+waitTime
     while True:
         try:
-            progress = driver.execute_script("return document.querySelector('#contentAreaDownloadsView .downloadMainArea .downloadContainer progress:nth-of-type(1)').value")
+            progress = driver.execute_script("return document.querySelector('.downloadContainer progress:first-of-type').value")
+            fileName = driver.execute_script("return document.querySelector('.downloadContainer description:first-of-type').value")
+
             while progress < 100:
                 time.sleep(1)
-                progress = driver.execute_script("return document.querySelector('#contentAreaDownloadsView .downloadMainArea .downloadContainer progress:nth-of-type(1)').value")
+                progress = driver.execute_script("return document.querySelector('.downloadContainer progress:first-of-type').value")
 
-            fileName = driver.execute_script("return document.querySelector('#contentAreaDownloadsView .downloadMainArea .downloadContainer description:nth-of-type(1)').value")
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
-            time.sleep(3)
+            time.sleep(2)
             return fileName
         except:
             pass
@@ -553,7 +555,7 @@ def main():
     download_gisaid_EpiCoV(
         argvs.username,
         argvs.password,
-        argvs.headless,
+        argvs.normal,
         argvs.outdir,
         argvs.location,
         argvs.colstart,

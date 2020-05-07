@@ -39,7 +39,7 @@ usage: gisaid_EpiCoV_downloader.py [-h] -u [STR] -p [STR] [-o [STR]]
                                    [-ce [YYYY-MM-DD]] [-ss [YYYY-MM-DD]]
                                    [-se [YYYY-MM-DD]] [-cg] [-hc] [-le]
                                    [-t [INT]] [-r [INT]] [-i [INT]] [-m]
-                                   [--headless]
+                                   [--normal]
 
 Download EpiCoV sequences from GISAID
 
@@ -74,5 +74,5 @@ optional arguments:
                         time interval between retries in second(s). Default is
                         3 seconds.
   -m, --meta            download detail metadata (experimental, very slow)
-  --headless            turn on headless mode (no x-window needs)
+  --normal              run firefox in normal mode.
 ```
