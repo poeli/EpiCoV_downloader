@@ -125,6 +125,7 @@ def download_gisaid_EpiCoV(
     mime_types += ",application/excel,application/vnd.ms-excel"
     mime_types += ",application/pdf,application/x-pdf"
     mime_types += ",application/x-bzip2"
+    mime_types += ",application/x-gzip,application/gzip"
 
     # start fresh
     try:
