@@ -35,7 +35,7 @@ Downloading sequences and acknowledgement table for genomes collected between fr
 ## Usage
 ```bash
 usage: gisaid_EpiCoV_downloader.py [-h] -u [STR] -p [STR] [-o [STR]]
-                                   [-l [STR]] [-cs [YYYY-MM-DD]]
+                                   [-l [STR]] [-ht [STR]] [-cs [YYYY-MM-DD]]
                                    [-ce [YYYY-MM-DD]] [-ss [YYYY-MM-DD]]
                                    [-se [YYYY-MM-DD]] [-cg] [-hc] [-le]
                                    [-t [INT]] [-r [INT]] [-i [INT]] [-m]
@@ -53,6 +53,8 @@ optional arguments:
                         Output directory
   -l [STR], --location [STR]
                         sample location
+  -ht [STR], --host [STR]
+                        Specify a host of the sample. Default is human.
   -cs [YYYY-MM-DD], --colstart [YYYY-MM-DD]
                         collection starts date
   -ce [YYYY-MM-DD], --colend [YYYY-MM-DD]

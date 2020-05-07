@@ -40,6 +40,10 @@ def parse_params():
                    metavar='[STR]', type=str, required=False, default=None,
                    help="sample location")
 
+    p.add_argument('-ht', '--host',
+                   metavar='[STR]', type=str, required=False, default='Human',
+                   help="Specify a host of the sample. Default is human.")
+
     p.add_argument('-cs', '--colstart',
                    metavar='[YYYY-MM-DD]', type=str, required=False, default=None,
                    help="collection starts date")
@@ -95,6 +99,7 @@ def download_gisaid_EpiCoV(
         normal,  # normal mode (quite)
         wd,        # output dir
         loc,       # location
+        host,      # host
         cs,        # collection start date
         ce,        # collection end date
         ss,        # submission start date
@@ -177,7 +182,7 @@ def download_gisaid_EpiCoV(
 
     waiting_sys_timer(wait)
 
-    # when user doesn't enter time/location, download all sequences and metadata
+    # when user doesn't enter time/location, download nextstrain sequences and metadata
     if not (cs or ce or ss or se or loc):
         # download from downloads section
         print("Clicking downloads...")
@@ -191,7 +196,7 @@ def download_gisaid_EpiCoV(
         driver.switch_to.frame(iframe)
         waiting_sys_timer(wait)
 
-        print("Downloading nextfasta...")
+        print("Downloading Nextstrain sequences...")
         dl_button = wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(text(), "nextfasta")]')))
         dl_button.click()
@@ -202,7 +207,7 @@ def download_gisaid_EpiCoV(
 
         waiting_sys_timer(wait)
 
-        print("Downloading nextmeta...")
+        print("Downloading Nextstrain metadata...")
         dl_button = wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(text(), "nextmeta")]')))
         dl_button.click()
@@ -233,9 +238,18 @@ def download_gisaid_EpiCoV(
         if loc:
             print("Setting location...")
             loc_input = driver.find_element_by_xpath(
-                "tr/td[contains(text(), 'Location')]/following-sibling::td/div/div/input"
+                "//td/div[contains(text(), 'Location')]/../following-sibling::td/div/div/input"
             )
             loc_input.send_keys(loc)
+            waiting_sys_timer(wait, 7)
+
+        # set host
+        if host:
+            print("Setting host...")
+            host_input = driver.find_element_by_xpath(
+                "//td/div[contains(text(), 'Host')]/../following-sibling::td/div/div/input"
+            )
+            host_input.send_keys(host)
             waiting_sys_timer(wait, 7)
 
         # set dates
@@ -271,6 +285,16 @@ def download_gisaid_EpiCoV(
             checkbox.click()
             waiting_sys_timer(wait)
 
+        # check if any genomes pass filters
+        warning_message = None
+        try:
+            warning_message = driver.find_element_by_xpath("//div[contains(text(), 'No data found.')]")
+        except:
+            pass
+        if warning_message:
+            print("No data found.")
+            sys.exit(1)
+
         # select all genomes
         print("Selecting all genomes...")
         button_sa = driver.find_element_by_css_selector("span.yui-dt-label input")
@@ -298,7 +322,7 @@ def download_gisaid_EpiCoV(
                 waiting_sys_timer(wait)
                 driver.switch_to.default_content()
 
-                fn = wait_downloaded_filename(wait, driver, 180)
+                fn = wait_downloaded_filename(wait, driver, 1800)
                 print(f"Downloaded to {fn}.")
 
                 break
@@ -558,6 +582,7 @@ def main():
         argvs.normal,
         argvs.outdir,
         argvs.location,
+        argvs.host,
         argvs.colstart,
         argvs.colend,
         argvs.substart,
