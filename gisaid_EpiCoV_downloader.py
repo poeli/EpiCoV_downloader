@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+__author__ = "Po-E Li, B10, LANL"
+__copyright__ = "LANL 2020"
+__license__ = "GPL"
+__version__ = "1.0.0"
+__email__ = "po-e@lanl.gov"
+
 import os
 import time
 import sys
@@ -16,7 +22,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def parse_params():
     p = ap.ArgumentParser(prog='gisaid_EpiCoV_downloader.py',
-                          description="""Download all EpiCoV sequcnes from GISAID""")
+                          description="""Download EpiCoV sequences from GISAID""")
 
     p.add_argument('-u', '--username',
                    metavar='[STR]', nargs=1, type=str, required=True,
@@ -29,6 +35,10 @@ def parse_params():
     p.add_argument('-o', '--outdir',
                    metavar='[STR]', type=str, required=False, default=None,
                    help="Output directory")
+
+    p.add_argument('-l', '--location',
+                   metavar='[STR]', type=str, required=False, default=None,
+                   help="sample location")
 
     p.add_argument('-cs', '--colstart',
                    metavar='[YYYY-MM-DD]', type=str, required=False, default=None,
@@ -52,6 +62,9 @@ def parse_params():
     p.add_argument('-hc', '--highcoverage',
                    action='store_true', help='high coverage only')
 
+    p.add_argument('-le', '--lowcoverageExcl',
+                   action='store_true', help='low coverage excluding')
+
     p.add_argument('-t', '--timeout',
                    metavar='[INT]', type=int, required=False, default=90,
                    help="set action timeout seconds. Default is 90 secs.")
@@ -65,10 +78,10 @@ def parse_params():
                    help="time interval between retries in second(s). Default is 3 seconds.")
 
     p.add_argument('-m', '--meta',
-                   action='store_true', help='download metadata')
+                   action='store_true', help='download detail metadata (experimental, very slow)')
 
     p.add_argument('--headless',
-                   action='store_true', help='turn on headless mode')
+                   action='store_true', help='turn on headless mode (no x-window needs)')
 
     args_parsed = p.parse_args()
     if not args_parsed.outdir:
@@ -76,7 +89,24 @@ def parse_params():
     return args_parsed
 
 
-def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, to, rt, iv, meta_dl):
+def download_gisaid_EpiCoV(
+        uname,     # username
+        upass,     # password
+        headless,  # headless mode (quite)
+        wd,        # output dir
+        loc,       # location
+        cs,        # collection start date
+        ce,        # collection end date
+        ss,        # submission start date
+        se,        # submission end date
+        cg,        # complete genome only
+        hc,        # high coverage only
+        le,        # low coverage excluding
+        to,        # timeout in sec
+        rt,        # num of retry
+        iv,        # interval in sec
+        meta_dl    # also download meta
+    ):
     """Download sequences and metadata from EpiCoV GISAID"""
 
     # output directory
@@ -84,10 +114,10 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
         os.makedirs(wd, exist_ok=True)
 
     wd = os.path.abspath(wd)
-    GISAID_FASTA = f'{wd}/sequences.fasta.bz2'
-    GISAID_TABLE = f'{wd}/gisaid_cov2020_acknowledgement_table.xls'
-    GISAID_JASON = f'{wd}/gisaid_cov2020_metadata.json'
-    GISAID_TSV   = f'{wd}/metadata.tsv.bz2'
+    # GISAID_FASTA = f'{wd}/sequences.fasta.bz2'
+    # GISAID_TABLE = f'{wd}/gisaid_cov2020_acknowledgement_table.xls'
+    GISAID_DTL_JASON = f'{wd}/gisaid_detail_metadata.json'
+    # GISAID_TSV   = f'{wd}/metadata.tsv.bz2'
     metadata = []
 
     # MIME types
@@ -98,10 +128,7 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
 
     # start fresh
     try:
-        os.remove(GISAID_FASTA)
-        os.remove(f'{GISAID_FASTA}.part')
-        os.remove(GISAID_TSV)
-        os.remove(f'{GISAID_TSV}.part')
+        os.remove(GISAID_DTL_JASON)
     except OSError:
         pass
 
@@ -149,59 +176,51 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
 
     waiting_sys_timer(wait)
 
-    # download from downloads section
-    print("Clicking downloads...")
-    pd_button = wait.until(EC.element_to_be_clickable(
-        (By.XPATH, "//div[@class='sys-actionbar-bar']//div[3]")))
+    # when user doesn't enter time/location, download all sequences and metadata
+    if not (cs or ce or ss or se or loc):
+        # download from downloads section
+        print("Clicking downloads...")
+        pd_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, "//div[@class='sys-actionbar-bar']//div[3]")))
+        pd_button.click()
+        waiting_sys_timer(wait)
 
-    #driver.execute_script("arguments[0].scrollIntoView();", pd_button)
+        # have to click the first row twice to start the iframe
+        iframe = waiting_for_iframe(wait, driver, rt, iv)
+        driver.switch_to.frame(iframe)
+        waiting_sys_timer(wait)
 
-    # have to click the first row twice to start the iframe
-    iframe = None
-    retry = 1
-    while retry <= rt:
-        try:
-            pd_button.click()
-            iframe = driver.find_element_by_xpath("//iframe")
-            if iframe:
-                break
-            else:
-                raise
-        except:
-            print(f"retrying...#{retry} in {iv} sec(s)")
-            if retry == rt:
-                print("Failed")
-                sys.exit(1)
-            else:
-                time.sleep(iv)
-                retry += 1
+        print("Downloading nextfasta...")
+        dl_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(text(), "nextfasta")]')))
+        dl_button.click()
+        waiting_sys_timer(wait)
 
-    driver.switch_to.frame(iframe)
-    waiting_sys_timer(wait)
+        fn = wait_downloaded_filename(wait, driver, 180)
+        print(f"Downloaded to {fn}.")
 
-    print("Downloading sequences.fasta.bz2...")
-    dl_button = wait.until(EC.element_to_be_clickable(
-        (By.XPATH, '//div[contains(text(), "nextfasta")]')))
-    dl_button.click()
-    waiting_sys_timer(wait)
+        waiting_sys_timer(wait)
 
-    print("Downloading metadata.tsv.bz2...")
-    dl_button = wait.until(EC.element_to_be_clickable(
-        (By.XPATH, '//div[contains(text(), "nextmeta")]')))
-    dl_button.click()
-    waiting_sys_timer(wait)
+        print("Downloading nextmeta...")
+        dl_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(text(), "nextmeta")]')))
+        dl_button.click()
 
-    back_button = wait.until(EC.element_to_be_clickable(
-        (By.XPATH, '//button[contains(text(), "Back")]')))
-    back_button.click()
+        fn = wait_downloaded_filename(wait, driver, 180)
+        print(f"Downloaded to {fn}.")
 
-    # wait for completely downloading files
-    while os.path.isfile(f'{GISAID_FASTA}.part') or os.path.isfile(f'{GISAID_TSV}.part'):
-        time.sleep(5)
+        waiting_sys_timer(wait)
 
-    driver.switch_to.default_content()
+        # go back to main frame
+        back_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, '//button[contains(text(), "Back")]')))
+        back_button.click()
 
-    if (cs and ce) or (ss and se):
+        driver.switch_to.default_content()
+        waiting_sys_timer(wait)
+
+    # have to reduce the range of genomes
+    if cs or ce or ss or se or loc:
         print("Browsing EpiCoV...")
         browse_tab = wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//*[contains(text(), "Browse")]')))
@@ -209,12 +228,22 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
         waiting_sys_timer(wait)
         waiting_table_to_get_ready(wait)
 
+        # set location
+        if loc:
+            print("Setting location...")
+            loc_input = driver.find_element_by_xpath(
+                "tr/td[contains(text(), 'Location')]/following-sibling::td/div/div/input"
+            )
+            loc_input.send_keys(loc)
+            waiting_sys_timer(wait, 7)
+
         # set dates
         date_inputs = driver.find_elements_by_css_selector(
             "div.sys-form-fi-date input")
         dates = (cs, ce, ss, se)
         for dinput, date in zip(date_inputs, dates):
             if date:
+                print("Setting date...")
                 dinput.send_keys(date)
 
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
@@ -222,59 +251,99 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
 
         # complete genome only
         if cg:
-            button = driver.find_element_by_xpath('//input[@value="complete"]')
-            button.click()
+            print("complete genome only...")
+            checkbox = driver.find_element_by_xpath('//input[@value="complete"]')
+            checkbox.click()
             waiting_sys_timer(wait)
 
         # high coverage only
         if hc:
-            button = driver.find_element_by_xpath('//input[@value="highq"]')
-            button.click()
+            print("high coverage only...")
+            checkbox = driver.find_element_by_xpath('//input[@value="highq"]')
+            checkbox.click()
             waiting_sys_timer(wait)
 
-        # download fasta
+        # excluding low coverage
+        if le:
+            print("low coverage excluding...")
+            checkbox = driver.find_element_by_xpath('//input[@value="lowco"]')
+            checkbox.click()
+            waiting_sys_timer(wait)
+
+        # select all genomes
+        print("Selecting all genomes...")
+        button_sa = driver.find_element_by_css_selector("span.yui-dt-label input")
+        button_sa.click()
+        waiting_sys_timer(wait)
+
+        # downloading sequence
         retry = 0
         while retry <= rt:
             try:
-                print("Selecting all sequences...")
-                # select all
-                button_sa = driver.find_element_by_css_selector("span.yui-dt-label input")
-                button_sa.click()
-                waiting_sys_timer(wait)
-
-                print("Downloading the sequence file...")
+                print("Downloading sequences for selected genomes...")
                 button = driver.find_element_by_xpath(
-                    "//td[@class='sys-datatable-info']/button")
+                    "//td[@class='sys-datatable-info']/button[contains(text(), 'Download')]")
                 button.click()
                 waiting_sys_timer(wait)
-                if not download_finished(GISAID_FASTA, 180):
-                    raise
+
+                # switch to iframe
+                iframe = waiting_for_iframe(wait, driver, rt, iv)
+                driver.switch_to.frame(iframe)
+                waiting_sys_timer(wait)
+                
+                button = driver.find_element_by_xpath(
+                    "//button[contains(text(), 'Download')]")
+                button.click()
+                waiting_sys_timer(wait)
+                driver.switch_to.default_content()
+
+                fn = wait_downloaded_filename(wait, driver, 180)
+                print(f"Downloaded to {fn}.")
+
                 break
             except:
                 print(f"retrying...#{retry} in {iv} sec(s)")
                 if retry == rt:
-                    print("Failed")
+                    print("Unexpected error:", sys.exc_info())
                     sys.exit(1)
                 else:
                     time.sleep(iv)
                     retry += 1
 
+        # downloading metadata
         retry = 0
         while retry <= rt:
             try:
-                print("Downloading the acknowledgement table...")
-                elem = driver.find_element_by_xpath(
-                    "/html/body/form/div[5]/div/div[3]/div[1]/div/center[1]/a")
-                script = elem.get_attribute("onclick")
-                driver.execute_script(f"return {script}")
+                print("Downloading acknowledgement table for selected genomes...")
+                button = driver.find_element_by_xpath(
+                    "//td[@class='sys-datatable-info']/button[contains(text(), 'Download')]")
+                button.click()
                 waiting_sys_timer(wait)
-                if not download_finished(GISAID_TABLE, 180):
-                    raise
+
+                # switch to iframe
+                iframe = waiting_for_iframe(wait, driver, rt, iv)
+                driver.switch_to.frame(iframe)
+                waiting_sys_timer(wait)
+                
+                label = driver.find_element_by_xpath(
+                    "//label[contains(text(), 'Acknowledgement Table')]")
+                label.click()
+
+                button = driver.find_element_by_xpath(
+                    "//button[contains(text(), 'Download')]")
+                button.click()
+
+                waiting_sys_timer(wait)
+                driver.switch_to.default_content()
+                
+                fn = wait_downloaded_filename(wait, driver, 180)
+                print(f"Downloaded to {fn}.")
+
                 break
             except:
                 print(f"retrying...#{retry} in {iv} sec(s)")
                 if retry == rt:
-                    print("Failed")
+                    print("Unexpected error:", sys.exc_info())
                     sys.exit(1)
                 else:
                     time.sleep(iv)
@@ -384,20 +453,9 @@ def download_gisaid_EpiCoV(uname, upass, headless, wd, cs, ce, ss, se, cg, hc, t
                                 retry += 1
 
             # writing metadata to JSON file
-            print("Writing metadata...")
-            with open(GISAID_JASON, 'w') as outfile:
+            print("Writing detail metadata...")
+            with open(GISAID_DTL_JASON, 'w') as outfile:
                 json.dump(metadata, outfile)
-
-        # wait for download to complete
-        if not os.path.isfile(GISAID_FASTA) or not os.path.isfile(GISAID_TABLE):
-            time.sleep(30)
-        if not os.path.isfile(GISAID_FASTA) or not os.path.isfile(GISAID_TABLE):
-            time.sleep(30)
-        if os.path.isfile(GISAID_FASTA) and os.path.isfile(GISAID_TABLE):
-            while (os.stat(GISAID_FASTA).st_size == 0):
-                time.sleep(5)
-            while (os.stat(GISAID_TABLE).st_size == 0):
-                time.sleep(5)
 
     # close driver
     driver.quit()
@@ -428,8 +486,11 @@ def getMetadata(record_elem):
 
 def waiting_sys_timer(wait, sec=1):
     """wait for system timer"""
-    wait.until(EC.invisibility_of_element_located(
-        (By.XPATH,  "//div[@id='sys_timer']")))
+    try:
+        wait.until(EC.invisibility_of_element_located(
+            (By.XPATH,  "//div[@id='sys_timer']")))
+    except:
+        pass
     time.sleep(sec)
 
 
@@ -439,15 +500,50 @@ def waiting_table_to_get_ready(wait, sec=1):
         (By.XPATH,  "//tbody[@class='yui-dt-message']")))
     time.sleep(sec)
 
+def waiting_for_iframe(wait, driver, rt, iv):
+    iframe = None
+    retry = 1
+    while retry <= rt:
+        try:
+            wait.until(EC.presence_of_element_located((By.XPATH, "//iframe")))
+            iframe = driver.find_element_by_xpath("//iframe")
+            if iframe:
+                return iframe
+            else:
+                raise
+        except:
+            print(f"retrying...#{retry} in {iv} sec(s)")
+            if retry == rt:
+                print("Failed")
+                sys.exit(1)
+            else:
+                time.sleep(iv)
+                retry += 1
 
-def download_finished(file, timeout=60):
-    sec = 0
-    while sec < timeout:
-        if os.path.exists(file):
-            return True
-        else:
-            sec += 1
-    return False
+def wait_downloaded_filename(wait, driver, waitTime=180):
+    driver.execute_script("window.open()")
+    wait.until(EC.new_window_is_opened)
+    driver.switch_to.window(driver.window_handles[-1])
+    driver.get("about:downloads")
+
+    endTime = time.time()+waitTime
+    while True:
+        try:
+            progress = driver.execute_script("return document.querySelector('#contentAreaDownloadsView .downloadMainArea .downloadContainer progress:nth-of-type(1)').value")
+            while progress < 100:
+                time.sleep(1)
+                progress = driver.execute_script("return document.querySelector('#contentAreaDownloadsView .downloadMainArea .downloadContainer progress:nth-of-type(1)').value")
+
+            fileName = driver.execute_script("return document.querySelector('#contentAreaDownloadsView .downloadMainArea .downloadContainer description:nth-of-type(1)').value")
+            driver.close()
+            driver.switch_to.window(driver.window_handles[0])
+            time.sleep(3)
+            return fileName
+        except:
+            pass
+        time.sleep(1)
+        if time.time() > endTime:
+            break
 
 
 def main():
@@ -458,12 +554,14 @@ def main():
         argvs.password,
         argvs.headless,
         argvs.outdir,
+        argvs.location,
         argvs.colstart,
         argvs.colend,
         argvs.substart,
         argvs.subend,
         argvs.complete,
         argvs.highcoverage,
+        argvs.lowcoverageExcl,
         argvs.timeout,
         argvs.retry,
         argvs.interval,
