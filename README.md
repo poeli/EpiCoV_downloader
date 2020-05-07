@@ -21,12 +21,15 @@ The username (-u) and password (-p) are required arguments for the script.
 If you do not specify a range of submission and/or collection dates, the nextfasta and nextmeta provided in GISAID/EpiCoV/Downloads will be downloaded.
 
 Downloading nextfasta and nextmeta provided in GISAID/EpiCoV/Downloads:
+
 `./gisaid_EpiCoV_downloader.py -u $UNAME -p $PASSWD`
 
 Downloading sequences and acknowledgement table for high quality genomes collected between 2019-12-26 and 2019-12-30:
+
 `./gisaid_EpiCoV_downloader.py -u $UNAME -p $PASSWD -cs 2019-12-26 -ce 2019-12-30 -hc -le -cg`
 
 Downloading sequences and acknowledgement table for genomes collected between from the USA:
+
 `./gisaid_EpiCoV_downloader.py -u $UNAME -p $PASSWD -ss 2019-12-26 -se 2019-12-30 -l USA`
 
 ## Usage
