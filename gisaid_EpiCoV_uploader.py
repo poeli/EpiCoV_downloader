@@ -209,7 +209,7 @@ def fill_EpiCoV_upload(uname, upass, seq, metadata, to, rt, iv, headless):
         warnings = driver.find_elements_by_xpath( "//div[@class='sys-form-fi-message']")
         for msg in warnings:
             if msg.is_displayed():
-                print(warnings.text)
+                print(msg.text)
 
     # close driver
     driver.quit()
