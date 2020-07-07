@@ -109,41 +109,41 @@ def fill_EpiCoV_upload(uname, upass, seq, metadata, to, rt, iv, headless):
     waiting_sys_timer(wait)
 
     # access uploading page
-    print("Access uploading page...")
+    print("Accessing uploading page...")
     upload_tab = wait.until(EC.element_to_be_clickable(
         (By.CSS_SELECTOR, 'div.sys-actionbar-action:nth-child(4)')))
     upload_tab.click()
     waiting_sys_timer(wait)
 
-    iframe = None
-    retry = 1
-    while retry <= rt:
-        try:
-            iframe = driver.find_element_by_xpath("//iframe")
-            if iframe:
-                break
-            else:
-                raise
-        except:
-            print(f"retrying...#{retry} in {iv} sec(s)")
-            if retry == rt:
-                print("Failed")
-                sys.exit(1)
-            else:
-                time.sleep(iv)
-                retry += 1
+    # iframe = None
+    # retry = 1
+    # while retry <= rt:
+    #     try:
+    #         iframe = driver.find_element_by_xpath("//iframe")
+    #         if iframe:
+    #             break
+    #         else:
+    #             raise
+    #     except:
+    #         print(f"retrying...#{retry} in {iv} sec(s)")
+    #         if retry == rt:
+    #             print("Failed")
+    #             sys.exit(1)
+    #         else:
+    #             time.sleep(iv)
+    #             retry += 1
     
-    driver.switch_to.frame(iframe)
+    # driver.switch_to.frame(iframe)
 
-    button = wait.until(
-        EC.presence_of_element_located(
-            (By.XPATH, "//td[1]"))
-    )
-    #button = driver.find_element_by_xpath('//td[1]')
-    button.click()
+    # button = wait.until(
+    #     EC.presence_of_element_located(
+    #         (By.XPATH, "//td[1]"))
+    # )
+    # #button = driver.find_element_by_xpath('//td[1]')
+    # button.click()
 
-    driver.switch_to.default_content()
-    waiting_sys_timer(wait)
+    # driver.switch_to.default_content()
+    # waiting_sys_timer(wait)
 
     # keyword mapping
     entry_keys_mapping = {
