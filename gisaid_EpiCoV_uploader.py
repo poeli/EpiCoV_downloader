@@ -115,35 +115,25 @@ def fill_EpiCoV_upload(uname, upass, seq, metadata, to, rt, iv, headless):
     upload_tab.click()
     waiting_sys_timer(wait)
 
-    # iframe = None
-    # retry = 1
-    # while retry <= rt:
-    #     try:
-    #         iframe = driver.find_element_by_xpath("//iframe")
-    #         if iframe:
-    #             break
-    #         else:
-    #             raise
-    #     except:
-    #         print(f"retrying...#{retry} in {iv} sec(s)")
-    #         if retry == rt:
-    #             print("Failed")
-    #             sys.exit(1)
-    #         else:
-    #             time.sleep(iv)
-    #             retry += 1
-    
-    # driver.switch_to.frame(iframe)
+    # WARNING: different users might have different uploading options
+    try:
+        iframe = driver.find_element_by_xpath("//iframe")
+        if iframe.is_displayed() and iframe.get_attribute('id').startswith('sysoverlay'):
+            print("Popup window detected...")
+            driver.switch_to.frame(iframe)
+            button = wait.until(
+                EC.presence_of_element_located(
+                    (By.XPATH, "//td[1]"))
+            )
+            
+            print("Choosing single upload option...")
+            #button = driver.find_element_by_xpath('//td[1]')
+            button.click()
 
-    # button = wait.until(
-    #     EC.presence_of_element_located(
-    #         (By.XPATH, "//td[1]"))
-    # )
-    # #button = driver.find_element_by_xpath('//td[1]')
-    # button.click()
-
-    # driver.switch_to.default_content()
-    # waiting_sys_timer(wait)
+            driver.switch_to.default_content()
+            waiting_sys_timer(wait)
+    except:
+        pass
 
     # keyword mapping
     entry_keys_mapping = {
