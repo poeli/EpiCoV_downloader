@@ -301,9 +301,12 @@ def download_gisaid_EpiCoV(
         button_sa.click()
         waiting_sys_timer(wait)
 
-        # downloading sequence
+        # downloading sequence data
+        num_download_options = 1
+        current_option = 0
+
         retry = 0
-        while retry <= rt:
+        while retry <= rt and current_option < num_download_options:
             try:
                 print("Downloading sequences for selected genomes...")
                 button = driver.find_element_by_xpath(
@@ -316,6 +319,12 @@ def download_gisaid_EpiCoV(
                 driver.switch_to.frame(iframe)
                 waiting_sys_timer(wait)
                 
+                # selecting options
+                labels = driver.find_elements_by_xpath("//label")
+                num_download_options = len(labels)
+                labels[current_option].click()
+                current_option += 1
+
                 button = driver.find_element_by_xpath(
                     "//button[contains(text(), 'Download')]")
                 button.click()
@@ -324,47 +333,6 @@ def download_gisaid_EpiCoV(
 
                 fn = wait_downloaded_filename(wait, driver, 1800)
                 print(f"Downloaded to {fn}.")
-
-                break
-            except:
-                print(f"retrying...#{retry} in {iv} sec(s)")
-                if retry == rt:
-                    print("Unexpected error:", sys.exc_info())
-                    sys.exit(1)
-                else:
-                    time.sleep(iv)
-                    retry += 1
-
-        # downloading metadata
-        retry = 0
-        while retry <= rt:
-            try:
-                print("Downloading acknowledgement table for selected genomes...")
-                button = driver.find_element_by_xpath(
-                    "//td[@class='sys-datatable-info']/button[contains(text(), 'Download')]")
-                button.click()
-                waiting_sys_timer(wait)
-
-                # switch to iframe
-                iframe = waiting_for_iframe(wait, driver, rt, iv)
-                driver.switch_to.frame(iframe)
-                waiting_sys_timer(wait)
-                
-                label = driver.find_element_by_xpath(
-                    "//label[contains(text(), 'Acknowledgement Table')]")
-                label.click()
-
-                button = driver.find_element_by_xpath(
-                    "//button[contains(text(), 'Download')]")
-                button.click()
-
-                waiting_sys_timer(wait)
-                driver.switch_to.default_content()
-                
-                fn = wait_downloaded_filename(wait, driver, 180)
-                print(f"Downloaded to {fn}.")
-
-                break
             except:
                 print(f"retrying...#{retry} in {iv} sec(s)")
                 if retry == rt:
@@ -546,6 +514,7 @@ def waiting_for_iframe(wait, driver, rt, iv):
                 retry += 1
 
 def wait_downloaded_filename(wait, driver, waitTime=180):
+    print(f"opening downloading pannel...")
     driver.execute_script("window.open()")
     wait.until(EC.new_window_is_opened)
     driver.switch_to.window(driver.window_handles[-1])
@@ -555,12 +524,14 @@ def wait_downloaded_filename(wait, driver, waitTime=180):
     endTime = time.time()+waitTime
     while True:
         try:
-            progress = driver.execute_script("return document.querySelector('.downloadContainer progress:first-of-type').value")
+            #progress = driver.execute_script("return document.querySelector('.downloadContainer progress:first-of-type').value")
             fileName = driver.execute_script("return document.querySelector('.downloadContainer description:first-of-type').value")
+            dldetail = driver.execute_script("return document.querySelector('.downloadDetailsNormal').value")
 
-            while progress < 100:
+            while "time left" in dldetail:
                 time.sleep(1)
-                progress = driver.execute_script("return document.querySelector('.downloadContainer progress:first-of-type').value")
+                dldetail = driver.execute_script("return document.querySelector('.downloadDetailsNormal').value")
+                #progress = driver.execute_script("return document.querySelector('.downloadContainer progress:first-of-type').value")
 
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
