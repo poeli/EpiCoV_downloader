@@ -119,11 +119,40 @@ def fill_EpiCoV_upload(uname, upass, seq, metadatafile, to, rt, iv, headless):
 	waiting_sys_timer(wait)
 
 	# access uploading page
+	# WARNING: different users might have different uploading options
 	print("Accessing batch uploading page...")
-	batch_upload_tab = wait.until(EC.element_to_be_clickable(
-		(By.CSS_SELECTOR, 'div.sys-actionbar-action:nth-child(5)')))
-	batch_upload_tab.click()
-	waiting_sys_timer(wait)
+	try:
+		batch_upload_tab = driver.find_element_by_xpath('//div[@class=sys-actionbar-action][contains(text(), "Batch Upload")]')
+		batch_upload_tab.click()
+		waiting_sys_timer(wait)
+	except:
+		upload_tab = wait.until(EC.element_to_be_clickable(
+			(By.CSS_SELECTOR, 'div.sys-actionbar-action:nth-child(4)')))
+		upload_tab.click()
+		waiting_sys_timer(wait)
+		
+	
+	try:
+		iframe = driver.find_element_by_xpath("//iframe")
+		if iframe.is_displayed() and iframe.get_attribute('id').startswith('sysoverlay'):
+			print("Popup window detected...")
+			driver.switch_to.frame(iframe)
+			button = wait.until(
+				EC.presence_of_element_located(
+					(By.XPATH, "//td[2]"))
+			)
+		
+			print("Choosing batch upload option...")
+			#button = driver.find_element_by_xpath('//td[1]')
+			button.click()
+
+			driver.switch_to.default_content()
+			waiting_sys_timer(wait)
+	except:
+		pass
+		
+	
+	print(metadatafile.name)
 
 	print("Send Excel metadata file...")
 	iframe = iframe=driver.find_elements_by_tag_name('iframe')[0]
@@ -133,6 +162,7 @@ def fill_EpiCoV_upload(uname, upass, seq, metadatafile, to, rt, iv, headless):
 					EC.presence_of_element_located(
 						(By.XPATH, "//input[@name='data'][@type='file']"))
 				)
+	
 	button.send_keys(metadatafile.name)
 	time.sleep(iv)
 	driver.switch_to.default_content()
