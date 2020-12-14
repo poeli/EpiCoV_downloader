@@ -23,8 +23,7 @@ jobs:
           activate-environment: gisaid
           channels: conda-forge,bioconda,defaults
           mamba-version: "*"
-      - name: list file
-        shell: bash -l {0}
+      - name: List files
         run: ls -lR
       - name: Check version
         shell: bash -l {0}
@@ -33,5 +32,6 @@ jobs:
         env:
           USER: ${{ secrets.USER }}
           PASS: ${{ secrets.PASS }}
+          DISPLAY: :0
         shell: bash -l {0}
         run: EpiCoV_downloader/gisaid_EpiCoV_downloader.py -u $USER -p $PASS
