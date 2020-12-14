@@ -3,7 +3,7 @@
 __author__ = "Po-E Li, B10, LANL"
 __copyright__ = "LANL 2020"
 __license__ = "GPL"
-__version__ = "1.0.0"
+__version__ = "2020.12.14"
 __email__ = "po-e@lanl.gov"
 
 import os
@@ -25,11 +25,11 @@ def parse_params():
                           description="""Download EpiCoV sequences from GISAID""")
 
     p.add_argument('-u', '--username',
-                   metavar='[STR]', nargs=1, type=str, required=True,
+                   metavar='[STR]', nargs=1, type=str, required=False,
                    help="GISAID username")
 
     p.add_argument('-p', '--password',
-                   metavar='[STR]', nargs=1, type=str, required=True,
+                   metavar='[STR]', nargs=1, type=str, required=False,
                    help="GISAID password")
 
     p.add_argument('-o', '--outdir',
@@ -87,6 +87,9 @@ def parse_params():
     p.add_argument('--normal',
                    action='store_true', help='run firefox in normal mode.')
 
+    p.add_argument('--version',
+                   action='store_true', help='print version number.')
+
     args_parsed = p.parse_args()
     if not args_parsed.outdir:
         args_parsed.outdir = os.getcwd()
@@ -119,10 +122,7 @@ def download_gisaid_EpiCoV(
         os.makedirs(wd, exist_ok=True)
 
     wd = os.path.abspath(wd)
-    # GISAID_FASTA = f'{wd}/sequences.fasta.bz2'
-    # GISAID_TABLE = f'{wd}/gisaid_cov2020_acknowledgement_table.xls'
     GISAID_DTL_JASON = f'{wd}/gisaid_detail_metadata.json'
-    # GISAID_TSV   = f'{wd}/metadata.tsv.bz2'
     metadata = []
 
     # MIME types
@@ -148,10 +148,12 @@ def download_gisaid_EpiCoV(
     profile.set_preference(
         "plugin.disable_full_page_plugin_for_types", mime_types)
     profile.set_preference("pdfjs.disabled", True)
+    profile.update_preferences()
 
     options = Options()
     if not normal:
         options.add_argument("--headless")
+        options.headless = True
     driver = webdriver.Firefox(firefox_profile=profile, options=options)
 
     # driverwait
@@ -192,34 +194,65 @@ def download_gisaid_EpiCoV(
         waiting_sys_timer(wait)
 
         # have to click the first row twice to start the iframe
-        iframe = waiting_for_iframe(wait, driver, rt, iv)
-        driver.switch_to.frame(iframe)
+        iframe_dl = waiting_for_iframe(wait, driver, rt, iv)
+        driver.switch_to.frame(iframe_dl)
         waiting_sys_timer(wait)
 
         print("Downloading Nextstrain sequences...")
+        # click nextfasta button
         dl_button = wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(text(), "nextfasta")]')))
         dl_button.click()
         waiting_sys_timer(wait)
+        # waiting for REMINDER
+        iframe = waiting_for_iframe(wait, driver, rt, iv)
+        driver.switch_to.frame(iframe)
+        waiting_sys_timer(wait)
+        # agree terms and conditions
+        checkbox = driver.find_element_by_xpath('//input[@class="sys-event-hook"]')
+        checkbox.click()
+        waiting_sys_timer(wait)
+        # click download button
+        dl_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, '//button[contains(text(), "Download")]')))
+        dl_button.click()
+        waiting_sys_timer(wait)
 
+
+        driver.switch_to.frame(iframe_dl)
         fn = wait_downloaded_filename(wait, driver, 180)
         print(f"Downloaded to {fn}.")
 
         waiting_sys_timer(wait)
 
         print("Downloading Nextstrain metadata...")
-        dl_button = wait.until(EC.element_to_be_clickable(
-            (By.XPATH, '//div[contains(text(), "nextmeta")]')))
+        driver.switch_to.frame(iframe_dl)
+        dl_button = driver.find_element_by_xpath('//div[contains(text(), "nextmeta")]')
         dl_button.click()
+        waiting_sys_timer(wait)
+        # waiting for REMINDER
+        iframe = waiting_for_iframe(wait, driver, rt, iv)
+        driver.switch_to.frame(iframe)
+        waiting_sys_timer(wait)
+        # agree terms and conditions
+        checkbox = driver.find_element_by_xpath('//input[@class="sys-event-hook"]')
+        checkbox.click()
+        waiting_sys_timer(wait)
+        # click download button
+        dl_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, '//button[contains(text(), "Download")]')))
+        dl_button.click()
+        waiting_sys_timer(wait)
 
+        driver.switch_to.frame(iframe_dl)
         fn = wait_downloaded_filename(wait, driver, 180)
         print(f"Downloaded to {fn}.")
 
         waiting_sys_timer(wait)
 
         # go back to main frame
-        back_button = wait.until(EC.element_to_be_clickable(
-            (By.XPATH, '//button[contains(text(), "Back")]')))
+        driver.switch_to.frame(iframe_dl)
+        back_button = driver.find_element_by_xpath('//button[contains(text(), "Back")]')
         back_button.click()
 
         driver.switch_to.default_content()
@@ -514,7 +547,7 @@ def waiting_for_iframe(wait, driver, rt, iv):
                 retry += 1
 
 def wait_downloaded_filename(wait, driver, waitTime=180):
-    print(f"opening downloading pannel...")
+    print(f"Opening downloading pannel...")
     driver.execute_script("window.open()")
     wait.until(EC.new_window_is_opened)
     driver.switch_to.window(driver.window_handles[-1])
@@ -546,6 +579,15 @@ def wait_downloaded_filename(wait, driver, waitTime=180):
 
 def main():
     argvs = parse_params()
+
+    if argvs.version:
+        print(f"v{__version__}")
+        exit(0)
+    else:
+        if not argvs.username or not argvs.password:
+            print("error: the following arguments are required: -u/--username, -p/--password")
+            exit(1)
+
     print(f"--- Ingest at {time.strftime('%Y-%m-%d %H:%M:%S')} ---")
     download_gisaid_EpiCoV(
         argvs.username,

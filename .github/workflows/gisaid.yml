@@ -1,0 +1,37 @@
+name: gisaid
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  gisaid_EpiCoV_downloader-test:
+    name: EpiCoV_downloader test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-latest"]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: EpiCoV_downloader
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          environment-file: EpiCoV_downloader/environment.yml
+          activate-environment: gisaid
+          channels: conda-forge,bioconda,defaults
+          mamba-version: "*"
+      - name: List files
+        run: ls -lR
+      - name: Check version
+        shell: bash -l {0}
+        run: EpiCoV_downloader/gisaid_EpiCoV_downloader.py --version
+      #- name: Check downloading nextfasta and nextmeta
+      #  env:
+      #    USER: ${{ secrets.USER }}
+      #    PASS: ${{ secrets.PASS }}
+      #    DISPLAY: :0
+      #  shell: bash -l {0}
+      #  run: EpiCoV_downloader/gisaid_EpiCoV_downloader.py -u $USER -p $PASS
