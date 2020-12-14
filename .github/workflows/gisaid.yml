@@ -23,7 +23,7 @@ jobs:
           activate-environment: gisaid
           channels: conda-forge,bioconda,defaults
           mamba-version: "*"
-      - uses: list file
+      - name: list file
         shell: bash -l {0}
         run: ls -al
       - name: Check version
