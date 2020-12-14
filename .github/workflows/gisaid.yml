@@ -19,7 +19,7 @@ jobs:
           path: EpiCoV_downloader
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          environment-file: environment.yml
+          environment-file: EpiCoV_downloader/environment.yml
           activate-environment: gisaid
           channels: conda-forge,bioconda,defaults
           mamba-version: "*"
