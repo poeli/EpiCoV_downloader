@@ -2,9 +2,9 @@ name: gisaid
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ master, develop ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ master, develop ]
 
 jobs:
   gisaid_EpiCoV_downloader-test:
