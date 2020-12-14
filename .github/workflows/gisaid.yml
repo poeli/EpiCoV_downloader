@@ -23,12 +23,15 @@ jobs:
           activate-environment: gisaid
           channels: conda-forge,bioconda,defaults
           mamba-version: "*"
+      - uses: list file
+        shell: bash -l {0}
+        run: ls -al
       - name: Check version
         shell: bash -l {0}
-        run: gisaid_EpiCoV_downloader.py --version
+        run: ./gisaid_EpiCoV_downloader.py --version
       - name: Check downloading nextfasta and nextmeta
         env:
           USER: ${{ secrets.USER }}
           PASS: ${{ secrets.PASS }}
         shell: bash -l {0}
-        run: gisaid_EpiCoV_downloader.py -u $USER -p $PASS
+        run: ./gisaid_EpiCoV_downloader.py -u $USER -p $PASS
