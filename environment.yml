@@ -1,0 +1,9 @@
+name: gisaid
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - selenium
+  - firefox
+  - geckodriver=0.26.0
