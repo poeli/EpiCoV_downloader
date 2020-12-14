@@ -25,13 +25,13 @@ jobs:
           mamba-version: "*"
       - name: list file
         shell: bash -l {0}
-        run: cd $GITHUB_WORKSPACE && ls -al
+        run: ls -lR
       - name: Check version
         shell: bash -l {0}
-        run: gisaid_EpiCoV_downloader.py --version
+        run: EpiCoV_downloader/gisaid_EpiCoV_downloader.py --version
       - name: Check downloading nextfasta and nextmeta
         env:
           USER: ${{ secrets.USER }}
           PASS: ${{ secrets.PASS }}
         shell: bash -l {0}
-        run: gisaid_EpiCoV_downloader.py -u $USER -p $PASS
+        run: EpiCoV_downloader/gisaid_EpiCoV_downloader.py -u $USER -p $PASS
