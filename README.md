@@ -1,5 +1,7 @@
 # GISAID EpiCoV Downloader
 
+ [![gisaid](https://github.com/poeli/EpiCoV_downloader/workflows/gisaid/badge.svg)](https://github.com/poeli/EpiCoV_downloader/actions?query=workflow%3Agisaid) 
+
 This is a GISAID downloader to retrieve all EpiCoV sequences and the table. The script utilizes Selenium to acess the GISAID website through a Firefox webdriver.
 
 ## Installation
