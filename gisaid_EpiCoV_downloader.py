@@ -18,7 +18,13 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import logging
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M',
+)
 
 def parse_params():
     p = ap.ArgumentParser(prog='gisaid_EpiCoV_downloader.py',
@@ -138,7 +144,7 @@ def download_gisaid_EpiCoV(
     except OSError:
         pass
 
-    print("Opening browser...")
+    logging.info("Opening browser...")
     profile = webdriver.FirefoxProfile()
     profile.set_preference("browser.download.folderList", 2)
     profile.set_preference("browser.download.manager.showWhenStarting", False)
@@ -157,18 +163,18 @@ def download_gisaid_EpiCoV(
     driver = webdriver.Firefox(firefox_profile=profile, options=options)
 
     # driverwait
-    driver.implicitly_wait(20)
+    driver.implicitly_wait(30)
     wait = WebDriverWait(driver, to)
 
     # open GISAID
-    print("Opening website GISAID...")
+    logging.info("Opening website GISAID...")
     driver.get('https://platform.gisaid.org/epi3/frontend')
     waiting_sys_timer(wait)
-    print(driver.title)
+    logging.info(driver.title)
     assert 'GISAID' in driver.title
 
     # login
-    print("Logining to GISAID...")
+    logging.info("Logining to GISAID...")
     username = driver.find_element_by_name('login')
     username.send_keys(uname)
     password = driver.find_element_by_name('password')
@@ -178,7 +184,7 @@ def download_gisaid_EpiCoV(
     waiting_sys_timer(wait)
 
     # navigate to EpiFlu
-    print("Navigating to EpiCoV...")
+    logging.info("Navigating to EpiCoV...")
     epicov_tab = driver.find_element_by_xpath("//div[@id='main_nav']//li[3]/a")
     epicov_tab.click()
 
@@ -187,7 +193,7 @@ def download_gisaid_EpiCoV(
     # when user doesn't enter time/location, download nextstrain sequences and metadata
     if not (cs or ce or ss or se or loc):
         # download from downloads section
-        print("Clicking downloads...")
+        logging.info("Clicking downloads...")
         pd_button = wait.until(EC.element_to_be_clickable(
             (By.XPATH, "//div[@class='sys-actionbar-bar']//div[3]")))
         pd_button.click()
@@ -198,7 +204,7 @@ def download_gisaid_EpiCoV(
         driver.switch_to.frame(iframe_dl)
         waiting_sys_timer(wait)
 
-        print("Downloading Nextfasta...")
+        logging.info("Downloading Nextfasta...")
         # click nextfasta button
         dl_button = wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(text(), "nextfasta")]')))
@@ -221,11 +227,11 @@ def download_gisaid_EpiCoV(
 
         driver.switch_to.frame(iframe_dl)
         fn = wait_downloaded_filename(wait, driver, 180)
-        print(f"Downloaded to {fn}.")
+        logging.info(f"Downloaded to {fn}.")
 
         waiting_sys_timer(wait)
 
-        print("Downloading Nextmeta...")
+        logging.info("Downloading Nextmeta...")
         driver.switch_to.frame(iframe_dl)
         dl_button = driver.find_element_by_xpath('//div[contains(text(), "nextmeta")]')
         dl_button.click()
@@ -246,7 +252,7 @@ def download_gisaid_EpiCoV(
 
         driver.switch_to.frame(iframe_dl)
         fn = wait_downloaded_filename(wait, driver, 180)
-        print(f"Downloaded to {fn}.")
+        logging.info(f"Downloaded to {fn}.")
 
         waiting_sys_timer(wait)
 
@@ -260,7 +266,7 @@ def download_gisaid_EpiCoV(
 
     # have to reduce the range of genomes
     if cs or ce or ss or se or loc:
-        print("Browsing EpiCoV...")
+        logging.info("Browsing EpiCoV...")
         browse_tab = wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//*[contains(text(), "Browse")]')))
         browse_tab.click()
@@ -269,7 +275,7 @@ def download_gisaid_EpiCoV(
 
         # set location
         if loc:
-            print("Setting location...")
+            logging.info("Setting location...")
             loc_input = driver.find_element_by_xpath(
                 "//td/div[contains(text(), 'Location')]/../following-sibling::td/div/div/input"
             )
@@ -278,7 +284,7 @@ def download_gisaid_EpiCoV(
 
         # set host
         if host:
-            print("Setting host...")
+            logging.info("Setting host...")
             host_input = driver.find_element_by_xpath(
                 "//td/div[contains(text(), 'Host')]/../following-sibling::td/div/div/input"
             )
@@ -291,7 +297,7 @@ def download_gisaid_EpiCoV(
         dates = (cs, ce, ss, se)
         for dinput, date in zip(date_inputs, dates):
             if date:
-                print("Setting date...")
+                logging.info("Setting date...")
                 dinput.send_keys(date)
 
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
@@ -299,21 +305,21 @@ def download_gisaid_EpiCoV(
 
         # complete genome only
         if cg:
-            print("complete genome only...")
+            logging.info("complete genome only...")
             checkbox = driver.find_element_by_xpath('//input[@value="complete"]')
             checkbox.click()
             waiting_sys_timer(wait)
 
         # high coverage only
         if hc:
-            print("high coverage only...")
+            logging.info("high coverage only...")
             checkbox = driver.find_element_by_xpath('//input[@value="highq"]')
             checkbox.click()
             waiting_sys_timer(wait)
 
         # excluding low coverage
         if le:
-            print("low coverage excluding...")
+            logging.info("low coverage excluding...")
             checkbox = driver.find_element_by_xpath('//input[@value="lowco"]')
             checkbox.click()
             waiting_sys_timer(wait)
@@ -325,11 +331,11 @@ def download_gisaid_EpiCoV(
         except:
             pass
         if warning_message:
-            print("No data found.")
+            logging.info("No data found.")
             sys.exit(1)
 
         # select all genomes
-        print("Selecting all genomes...")
+        logging.info("Selecting all genomes...")
         button_sa = driver.find_element_by_css_selector("span.yui-dt-label input")
         button_sa.click()
         waiting_sys_timer(wait)
@@ -341,7 +347,7 @@ def download_gisaid_EpiCoV(
         retry = 0
         while retry <= rt and current_option < num_download_options:
             try:
-                print("Downloading sequences for selected genomes...")
+                logging.info("Downloading sequences for selected genomes...")
                 button = driver.find_element_by_xpath(
                     "//td[@class='sys-datatable-info']/button[contains(text(), 'Download')]")
                 button.click()
@@ -365,11 +371,11 @@ def download_gisaid_EpiCoV(
                 driver.switch_to.default_content()
 
                 fn = wait_downloaded_filename(wait, driver, 1800)
-                print(f"Downloaded to {fn}.")
+                logging.info(f"Downloaded to {fn}.")
             except:
-                print(f"retrying...#{retry} in {iv} sec(s)")
+                logging.info(f"retrying...#{retry} in {iv} sec(s)")
                 if retry == rt:
-                    print("Unexpected error:", sys.exc_info())
+                    logging.error("Unexpected error:", sys.exc_info())
                     sys.exit(1)
                 else:
                     time.sleep(iv)
@@ -378,9 +384,9 @@ def download_gisaid_EpiCoV(
         # iterate each pages
         if meta_dl:
             page_num = 1
-            print("Retrieving metadata...")
+            logging.info("Retrieving metadata...")
             while True:
-                print(f"Starting processing page# {page_num}...")
+                logging.info(f"Starting processing page# {page_num}...")
                 # retrieve tables
                 tbody = wait.until(
                     EC.presence_of_element_located(
@@ -408,9 +414,9 @@ def download_gisaid_EpiCoV(
                             else:
                                 raise
                         except:
-                            print(f"retrying...#{retry} in {iv} sec(s)")
+                            logging.info(f"retrying...#{retry} in {iv} sec(s)")
                             if retry == rt:
-                                print("Failed")
+                                logging.info("Failed")
                                 sys.exit(1)
                             else:
                                 time.sleep(iv)
@@ -424,9 +430,9 @@ def download_gisaid_EpiCoV(
                     if error_token:
                         error_token_text = error_token.text
                         if "error-token" in error_token.text:
-                            print(
+                            logging.error(
                                 "[FATAL ERROR] A website internal server error occurred.")
-                            print(error_token_text)
+                            logging.error(error_token_text)
                             sys.exit(1)
 
                     # get the element of table with metadata
@@ -438,14 +444,14 @@ def download_gisaid_EpiCoV(
                     # parse metadata
                     m = getMetadata(record_elem)
                     metadata.append(m)
-                    print(f"{m['Accession ID']}\t{m['Virus name']}")
+                    logging.info(f"{m['Accession ID']}\t{m['Virus name']}")
 
                     # get back
                     ActionChains(driver).send_keys(Keys.ESCAPE).perform()
                     time.sleep(1)
                     driver.switch_to.default_content()
 
-                print(f"Compeleted page# {page_num}.")
+                logging.info(f"Compeleted page# {page_num}.")
                 page_num += 1
 
                 # go to the next page
@@ -458,7 +464,7 @@ def download_gisaid_EpiCoV(
                     break
 
                 if button_next_page:
-                    print(f"Entering page# {page_num}...")
+                    logging.info(f"Entering page# {page_num}...")
                     while retry <= rt:
                         try:
                             button_next_page.click()
@@ -470,16 +476,16 @@ def download_gisaid_EpiCoV(
                             else:
                                 break
                         except:
-                            print(f"retrying...#{retry} in {iv} sec(s)")
+                            logging.info(f"retrying...#{retry} in {iv} sec(s)")
                             if retry == rt:
-                                print("Failed")
+                                logging.info("Failed")
                                 sys.exit(1)
                             else:
                                 time.sleep(iv)
                                 retry += 1
 
             # writing metadata to JSON file
-            print("Writing detail metadata...")
+            logging.info("Writing detail metadata...")
             with open(GISAID_DTL_JASON, 'w') as outfile:
                 json.dump(metadata, outfile)
 
@@ -538,16 +544,16 @@ def waiting_for_iframe(wait, driver, rt, iv):
             else:
                 raise
         except:
-            print(f"retrying...#{retry} in {iv} sec(s)")
+            logging.info(f"retrying...#{retry} in {iv} sec(s)")
             if retry == rt:
-                print("Failed")
+                logging.info("Failed")
                 sys.exit(1)
             else:
                 time.sleep(iv)
                 retry += 1
 
 def wait_downloaded_filename(wait, driver, waitTime=180):
-    print(f"Opening downloading pannel...")
+    logging.info(f"Opening Firefox downloading window...")
     driver.execute_script("window.open()")
     wait.until(EC.new_window_is_opened)
     driver.switch_to.window(driver.window_handles[-1])
@@ -581,14 +587,14 @@ def main():
     argvs = parse_params()
 
     if argvs.version:
-        print(f"v{__version__}")
+        logging.info(f"v{__version__}")
         exit(0)
     else:
         if not argvs.username or not argvs.password:
-            print("error: the following arguments are required: -u/--username, -p/--password")
+            logging.error("error: the following arguments are required: -u/--username, -p/--password")
             exit(1)
 
-    print(f"--- Ingest at {time.strftime('%Y-%m-%d %H:%M:%S')} ---")
+    logging.info(f"Starting GISAID EpiCoV Utility v{__version__}")
     download_gisaid_EpiCoV(
         argvs.username,
         argvs.password,
@@ -608,7 +614,7 @@ def main():
         argvs.interval,
         argvs.meta
     )
-    print("Completed.")
+    logging.info("Completed.")
 
 
 if __name__ == "__main__":
