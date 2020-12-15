@@ -38,10 +38,7 @@ jobs:
         run: EpiCoV_downloader/gisaid_EpiCoV_downloader.py --version
 
       - name: Check downloading nextfasta and nextmeta
-        shell: bash -l {0}
-        env:
-          USER: ${{ secrets.USER }}
-          PASS: ${{ secrets.PASS }}
         run: |
           export DISPLAY=:0
-          EpiCoV_downloader/gisaid_EpiCoV_downloader.py -u $USER -p $PASS
+          which python
+          EpiCoV_downloader/gisaid_EpiCoV_downloader.py -u ${{ secrets.USER }} -p ${{ secrets.PASS }}
