@@ -40,5 +40,8 @@ jobs:
       - name: Check downloading nextfasta and nextmeta
         run: |
           export DISPLAY=:0
-          which python
           EpiCoV_downloader/gisaid_EpiCoV_downloader.py -u ${{ secrets.USER }} -p ${{ secrets.PASS }}
+
+      - name: Cat log
+        if: ${{ failure() }}
+        run: cat geckodriver.log
