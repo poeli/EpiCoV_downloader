@@ -28,10 +28,10 @@ jobs:
       - name: Check version
         shell: bash -l {0}
         run: EpiCoV_downloader/gisaid_EpiCoV_downloader.py --version
-      #- name: Check downloading nextfasta and nextmeta
-      #  env:
-      #    USER: ${{ secrets.USER }}
-      #    PASS: ${{ secrets.PASS }}
-      #    DISPLAY: :0
-      #  shell: bash -l {0}
-      #  run: EpiCoV_downloader/gisaid_EpiCoV_downloader.py -u $USER -p $PASS
+      - name: Check downloading nextfasta and nextmeta
+        env:
+          USER: ${{ secrets.USER }}
+          PASS: ${{ secrets.PASS }}
+        run: |
+          export DISPLAY=:0
+          EpiCoV_downloader/gisaid_EpiCoV_downloader.py -u $USER -p $PASS
