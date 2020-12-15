@@ -28,20 +28,21 @@ jobs:
           activate-environment: gisaid
           python-version: ${{ matrix.python-version }}
 
-      - name: List files
-        run: conda uninstall firefox
-
-      - name: List files
-        run: ls -lR
+      - name: use default firefox
+        run: |
+          conda uninstall firefox
+          conda list
+          which firefox
 
       - name: Check version
-        run: EpiCoV_downloader/gisaid_EpiCoV_downloader.py --version
+        run: |
+          EpiCoV_downloader/gisaid_EpiCoV_downloader.py --version
 
       - name: Check downloading nextfasta and nextmeta
         run: |
-          export DISPLAY=:0
           EpiCoV_downloader/gisaid_EpiCoV_downloader.py -u ${{ secrets.USER }} -p ${{ secrets.PASS }}
 
       - name: Cat log
         if: ${{ failure() }}
-        run: cat geckodriver.log
+        run: |
+          cat geckodriver.log

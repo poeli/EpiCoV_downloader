@@ -11,6 +11,7 @@ import time
 import sys
 import argparse as ap
 import json
+import logging
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -18,7 +19,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import logging
 
 logging.basicConfig(
     level=logging.INFO,
@@ -90,6 +90,9 @@ def parse_params():
     p.add_argument('-m', '--meta',
                    action='store_true', help='download detail metadata (experimental, very slow)')
 
+    p.add_argument('-nnd', '--nonextstraindata',
+                   action='store_true', help='Do not download nextstrain data')
+
     p.add_argument('--normal',
                    action='store_true', help='run firefox in normal mode.')
 
@@ -105,7 +108,7 @@ def parse_params():
 def download_gisaid_EpiCoV(
         uname,     # username
         upass,     # password
-        normal,  # normal mode (quite)
+        normal,    # normal mode (quite)
         wd,        # output dir
         loc,       # location
         host,      # host
@@ -119,9 +122,15 @@ def download_gisaid_EpiCoV(
         to,        # timeout in sec
         rt,        # num of retry
         iv,        # interval in sec
-        meta_dl    # also download meta
+        meta_dl,   # also download meta
+        nnd,       # do not download nextstrain data
     ):
     """Download sequences and metadata from EpiCoV GISAID"""
+
+    # when user doesn't download nextstrain data, it's essential to enter time range/location
+    if not (cs or ce or ss or se or loc) and nnd:
+        logging.error("No time range or location entered.")
+        sys.exit(1)
 
     # output directory
     if not os.path.exists(wd):
@@ -158,7 +167,6 @@ def download_gisaid_EpiCoV(
 
     options = Options()
     if not normal:
-        options.add_argument("--headless")
         options.headless = True
     driver = webdriver.Firefox(firefox_profile=profile, options=options)
 
@@ -190,8 +198,8 @@ def download_gisaid_EpiCoV(
 
     waiting_sys_timer(wait)
 
-    # when user doesn't enter time/location, download nextstrain sequences and metadata
-    if not (cs or ce or ss or se or loc):
+    # download nextstrain data
+    if not nnd:
         # download from downloads section
         logging.info("Clicking downloads...")
         pd_button = wait.until(EC.element_to_be_clickable(
@@ -263,8 +271,7 @@ def download_gisaid_EpiCoV(
 
         driver.switch_to.default_content()
         waiting_sys_timer(wait)
-
-    # have to reduce the range of genomes
+    
     if cs or ce or ss or se or loc:
         logging.info("Browsing EpiCoV...")
         browse_tab = wait.until(EC.element_to_be_clickable(
@@ -478,7 +485,7 @@ def download_gisaid_EpiCoV(
                         except:
                             logging.info(f"retrying...#{retry} in {iv} sec(s)")
                             if retry == rt:
-                                logging.info("Failed")
+                                logging.error("Failed")
                                 sys.exit(1)
                             else:
                                 time.sleep(iv)
@@ -587,14 +594,14 @@ def main():
     argvs = parse_params()
 
     if argvs.version:
-        logging.info(f"v{__version__}")
+        print(f"v{__version__}")
         exit(0)
     else:
         if not argvs.username or not argvs.password:
             logging.error("error: the following arguments are required: -u/--username, -p/--password")
             exit(1)
 
-    logging.info(f"Starting GISAID EpiCoV Utility v{__version__}")
+    logging.info(f"GISAID EpiCoV Utility v{__version__}")
     download_gisaid_EpiCoV(
         argvs.username,
         argvs.password,
@@ -612,7 +619,8 @@ def main():
         argvs.timeout,
         argvs.retry,
         argvs.interval,
-        argvs.meta
+        argvs.meta,
+        argvs.nonextstraindata
     )
     logging.info("Completed.")
 
