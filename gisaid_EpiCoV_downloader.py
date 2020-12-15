@@ -231,10 +231,9 @@ def download_gisaid_EpiCoV(
             (By.XPATH, '//button[contains(text(), "Download")]')))
         dl_button.click()
         waiting_sys_timer(wait)
-
-
-        driver.switch_to.frame(iframe_dl)
-        fn = wait_downloaded_filename(wait, driver, 180)
+        # Opening Firefox downloading window
+        driver.switch_to.default_content()
+        fn = wait_downloaded_filename(wait, driver, 600)
         logging.info(f"Downloaded to {fn}.")
         
         waiting_sys_timer(wait)
@@ -257,9 +256,9 @@ def download_gisaid_EpiCoV(
             (By.XPATH, '//button[contains(text(), "Download")]')))
         dl_button.click()
         waiting_sys_timer(wait)
-
-        driver.switch_to.frame(iframe_dl)
-        fn = wait_downloaded_filename(wait, driver, 180)
+        # Opening Firefox downloading window
+        driver.switch_to.default_content()
+        fn = wait_downloaded_filename(wait, driver, 600)
         logging.info(f"Downloaded to {fn}.")
 
         waiting_sys_timer(wait)
