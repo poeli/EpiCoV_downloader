@@ -12,8 +12,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["ubuntu-latest", "macos-latest"]
-        python-version: ["3.6", "3.8"]
+        os: ["ubuntu-latest"]
+        python-version: ["3.9"]
     defaults:
       run:
         shell: bash -l {0}
@@ -26,9 +26,6 @@ jobs:
         with:
           environment-file: EpiCoV_downloader/environment.yml
           activate-environment: gisaid
-          channels: conda-forge,bioconda,defaults
-          mamba-version: "*"
-          auto-update-conda: true
           python-version: ${{ matrix.python-version }}
 
       - name: List files

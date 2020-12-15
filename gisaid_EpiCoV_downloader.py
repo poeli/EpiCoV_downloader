@@ -157,7 +157,7 @@ def download_gisaid_EpiCoV(
     driver = webdriver.Firefox(firefox_profile=profile, options=options)
 
     # driverwait
-    driver.implicitly_wait(60)
+    driver.implicitly_wait(20)
     wait = WebDriverWait(driver, to)
 
     # open GISAID
