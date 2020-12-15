@@ -228,7 +228,7 @@ def download_gisaid_EpiCoV(
         driver.switch_to.frame(iframe_dl)
         fn = wait_downloaded_filename(wait, driver, 180)
         logging.info(f"Downloaded to {fn}.")
-
+        
         waiting_sys_timer(wait)
 
         logging.info("Downloading Nextmeta...")

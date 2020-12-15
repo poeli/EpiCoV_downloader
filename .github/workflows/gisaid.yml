@@ -29,6 +29,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: List files
+        run: conda uninstall firefox
+
+      - name: List files
         run: ls -lR
 
       - name: Check version
