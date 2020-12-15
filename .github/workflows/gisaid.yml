@@ -5,33 +5,40 @@ on:
     branches: [ master, develop ]
   pull_request:
     branches: [ master, develop ]
-
+  schedule:
+    - cron:  '* * * * 0'
 jobs:
-  gisaid_EpiCoV_downloader-test:
-    name: EpiCoV_downloader test on ${{ matrix.os }}
+  conda-installation:
+    name: EpiCoV_downloader test (${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: ["ubuntu-latest", "macos-latest"]
+        python-version: ["3.6", "3.9"]
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
       - uses: actions/checkout@v2
         with:
           path: EpiCoV_downloader
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
           environment-file: EpiCoV_downloader/environment.yml
           activate-environment: gisaid
-          channels: conda-forge,bioconda,defaults
-          mamba-version: "*"
-      - name: List files
-        run: ls -lR
+          python-version: ${{ matrix.python-version }}
+
       - name: Check version
-        shell: bash -l {0}
-        run: EpiCoV_downloader/gisaid_EpiCoV_downloader.py --version
-      #- name: Check downloading nextfasta and nextmeta
-      #  env:
-      #    USER: ${{ secrets.USER }}
-      #    PASS: ${{ secrets.PASS }}
-      #    DISPLAY: :0
-      #  shell: bash -l {0}
-      #  run: EpiCoV_downloader/gisaid_EpiCoV_downloader.py -u $USER -p $PASS
+        run: |
+          conda list
+          EpiCoV_downloader/gisaid_EpiCoV_downloader.py --version
+
+      - name: Check downloading nextfasta and nextmeta
+        run: |
+          EpiCoV_downloader/gisaid_EpiCoV_downloader.py -u ${{ secrets.USER }} -p ${{ secrets.PASS }}
+
+      - name: Cat log
+        if: ${{ failure() }}
+        run: |
+          cat geckodriver.log
