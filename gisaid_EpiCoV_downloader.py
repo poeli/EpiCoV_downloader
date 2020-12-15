@@ -3,7 +3,7 @@
 __author__ = "Po-E Li, B10, LANL"
 __copyright__ = "LANL 2020"
 __license__ = "GPL"
-__version__ = "2020.12.14"
+__version__ = "20.12.14"
 __email__ = "po-e@lanl.gov"
 
 import os
@@ -157,7 +157,7 @@ def download_gisaid_EpiCoV(
     driver = webdriver.Firefox(firefox_profile=profile, options=options)
 
     # driverwait
-    driver.implicitly_wait(20)
+    driver.implicitly_wait(60)
     wait = WebDriverWait(driver, to)
 
     # open GISAID
@@ -198,7 +198,7 @@ def download_gisaid_EpiCoV(
         driver.switch_to.frame(iframe_dl)
         waiting_sys_timer(wait)
 
-        print("Downloading Nextstrain sequences...")
+        print("Downloading Nextfasta...")
         # click nextfasta button
         dl_button = wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(text(), "nextfasta")]')))
@@ -225,7 +225,7 @@ def download_gisaid_EpiCoV(
 
         waiting_sys_timer(wait)
 
-        print("Downloading Nextstrain metadata...")
+        print("Downloading Nextmeta...")
         driver.switch_to.frame(iframe_dl)
         dl_button = driver.find_element_by_xpath('//div[contains(text(), "nextmeta")]')
         dl_button.click()
