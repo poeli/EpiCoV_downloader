@@ -6,9 +6,9 @@ on:
   pull_request:
     branches: [ master, develop ]
   schedule:
-    - cron:  '* * * * 6'
+    - cron:  '0 0 * * *'
 jobs:
-  conda-installation:
+  functional-tests:
     name: EpiCoV_downloader test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -26,7 +26,6 @@ jobs:
         with:
           environment-file: EpiCoV_downloader/environment.yml
           activate-environment: gisaid
-          python-version: ${{ matrix.python-version }}
 
       - name: Check version
         run: |
@@ -37,7 +36,7 @@ jobs:
         run: |
           EpiCoV_downloader/gisaid_EpiCoV_downloader.py -u ${{ secrets.USER }} -p ${{ secrets.PASS }}
 
-      - name: Cat log
+      - name: Cat geckodriver log
         if: ${{ failure() }}
         run: |
           cat geckodriver.log
