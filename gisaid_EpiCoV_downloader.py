@@ -168,7 +168,7 @@ def download_gisaid_EpiCoV(
     options = Options()
     if not normal:
         options.headless = True
-    driver = webdriver.Firefox(firefox_profile=profile, options=options")
+    driver = webdriver.Firefox(firefox_profile=profile, options=options)
 
     # driverwait
     driver.implicitly_wait(30)
