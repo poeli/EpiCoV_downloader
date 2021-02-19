@@ -3,7 +3,7 @@
 __author__ = "Po-E Li, B10, LANL"
 __copyright__ = "LANL 2020"
 __license__ = "GPL"
-__version__ = "20.12.14"
+__version__ = "21.02.18"
 __email__ = "po-e@lanl.gov"
 
 import os
@@ -96,6 +96,10 @@ def parse_params():
     p.add_argument('--normal',
                    action='store_true', help='run firefox in normal mode.')
 
+    p.add_argument('--ffbin',
+                   metavar='[STR]', type=str, required=False,
+                   help="Specify the path of firefox binary.")
+
     p.add_argument('--version',
                    action='store_true', help='print version number.')
 
@@ -124,6 +128,7 @@ def download_gisaid_EpiCoV(
         iv,        # interval in sec
         meta_dl,   # also download meta
         nnd,       # do not download nextstrain data
+        ffbin      # firefox binary path
     ):
     """Download sequences and metadata from EpiCoV GISAID"""
 
@@ -168,7 +173,9 @@ def download_gisaid_EpiCoV(
     options = Options()
     if not normal:
         options.headless = True
-    driver = webdriver.Firefox(firefox_profile=profile, options=options)
+
+    driver = webdriver.Firefox(
+        firefox_profile=profile, options=options, firefox_binary=ffbin)
 
     # driverwait
     driver.implicitly_wait(30)
@@ -209,13 +216,11 @@ def download_gisaid_EpiCoV(
 
         # have to click the first row twice to start the iframe
         iframe_dl = waiting_for_iframe(wait, driver, rt, iv)
+
+        logging.info("Downloading metadata...")
         driver.switch_to.frame(iframe_dl)
         waiting_sys_timer(wait)
-
-        logging.info("Downloading Nextfasta...")
-        # click nextfasta button
-        dl_button = wait.until(EC.element_to_be_clickable(
-            (By.XPATH, '//div[contains(text(), "nextfasta")]')))
+        dl_button = driver.find_element_by_xpath('//div[contains(text(), "metadata")]')
         dl_button.click()
         waiting_sys_timer(wait)
         # waiting for REMINDER
@@ -223,6 +228,7 @@ def download_gisaid_EpiCoV(
         driver.switch_to.frame(iframe)
         waiting_sys_timer(wait)
         # agree terms and conditions
+        logging.info(" -- agreeing terms and conditions")
         checkbox = driver.find_element_by_xpath('//input[@class="sys-event-hook"]')
         checkbox.click()
         waiting_sys_timer(wait)
@@ -231,16 +237,20 @@ def download_gisaid_EpiCoV(
             (By.XPATH, '//button[contains(text(), "Download")]')))
         dl_button.click()
         waiting_sys_timer(wait)
+        logging.info(" -- downloading")
         # Opening Firefox downloading window
         driver.switch_to.default_content()
         fn = wait_downloaded_filename(wait, driver, 600)
-        logging.info(f"Downloaded to {fn}.")
+        logging.info(f" -- downloaded to {fn}.")
         
         waiting_sys_timer(wait)
 
-        logging.info("Downloading Nextmeta...")
+        logging.info("Downloading FASTA...")
         driver.switch_to.frame(iframe_dl)
-        dl_button = driver.find_element_by_xpath('//div[contains(text(), "nextmeta")]')
+        waiting_sys_timer(wait)
+        # click nextfasta button
+        dl_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[text()="FASTA"]')))
         dl_button.click()
         waiting_sys_timer(wait)
         # waiting for REMINDER
@@ -248,6 +258,7 @@ def download_gisaid_EpiCoV(
         driver.switch_to.frame(iframe)
         waiting_sys_timer(wait)
         # agree terms and conditions
+        logging.info(" -- agreeing terms and conditions")
         checkbox = driver.find_element_by_xpath('//input[@class="sys-event-hook"]')
         checkbox.click()
         waiting_sys_timer(wait)
@@ -256,10 +267,11 @@ def download_gisaid_EpiCoV(
             (By.XPATH, '//button[contains(text(), "Download")]')))
         dl_button.click()
         waiting_sys_timer(wait)
+        logging.info(" -- downloading")
         # Opening Firefox downloading window
         driver.switch_to.default_content()
         fn = wait_downloaded_filename(wait, driver, 600)
-        logging.info(f"Downloaded to {fn}.")
+        logging.info(f" -- downloaded to {fn}.")
 
         waiting_sys_timer(wait)
 
@@ -559,7 +571,7 @@ def waiting_for_iframe(wait, driver, rt, iv):
                 retry += 1
 
 def wait_downloaded_filename(wait, driver, waitTime=180):
-    logging.info(f"Opening Firefox downloading window...")
+    # logging.info(f"Opening Firefox downloading window...")
     driver.execute_script("window.open()")
     wait.until(EC.new_window_is_opened)
     driver.switch_to.window(driver.window_handles[-1])
@@ -619,7 +631,8 @@ def main():
         argvs.retry,
         argvs.interval,
         argvs.meta,
-        argvs.nonextstraindata
+        argvs.nonextstraindata,
+        argvs.ffbin
     )
     logging.info("Completed.")
 
