@@ -28,7 +28,7 @@ logging.basicConfig(
 
 def parse_params():
     p = ap.ArgumentParser(prog='gisaid_EpiCoV_downloader.py',
-                          description="""Download EpiCoV sequences from GISAID""")
+                          description="""Download EpiCoV sequences from GISAID. WARNING: By using this software you agree GISAID's Terms of Use and reaffirm your understanding of these terms.""")
 
     p.add_argument('-u', '--username',
                    metavar='[STR]', nargs=1, type=str, required=False,
@@ -87,9 +87,6 @@ def parse_params():
                    metavar='[INT]', type=int, required=False, default=3,
                    help="time interval between retries in second(s). Default is 3 seconds.")
 
-    p.add_argument('-m', '--meta',
-                   action='store_true', help='download detail metadata (experimental, very slow)')
-
     p.add_argument('-nnd', '--nonextstraindata',
                    action='store_true', help='Do not download nextstrain data')
 
@@ -126,7 +123,6 @@ def download_gisaid_EpiCoV(
         to,        # timeout in sec
         rt,        # num of retry
         iv,        # interval in sec
-        meta_dl,   # also download meta
         nnd,       # do not download nextstrain data
         ffbin      # firefox binary path
     ):
@@ -399,114 +395,6 @@ def download_gisaid_EpiCoV(
                     time.sleep(iv)
                     retry += 1
 
-        # iterate each pages
-        if meta_dl:
-            page_num = 1
-            logging.info("Retrieving metadata...")
-            while True:
-                logging.info(f"Starting processing page# {page_num}...")
-                # retrieve tables
-                tbody = wait.until(
-                    EC.presence_of_element_located(
-                        (By.XPATH, "//tbody[@class='yui-dt-data']"))
-                )
-
-                waiting_table_to_get_ready(wait)
-
-                # interate each row
-                for tr in tbody.find_elements_by_tag_name("tr"):
-                    td = tr.find_element_by_tag_name("td")
-                    driver.execute_script("arguments[0].scrollIntoView();", td)
-
-                    # have to click the first row twice to start the iframe
-                    iframe = None
-                    record_elem = None
-                    retry = 1
-                    while retry <= rt:
-                        try:
-                            td.click()
-                            waiting_sys_timer(wait)
-                            iframe = driver.find_element_by_xpath("//iframe")
-                            if iframe:
-                                break
-                            else:
-                                raise
-                        except:
-                            logging.info(f"retrying...#{retry} in {iv} sec(s)")
-                            if retry == rt:
-                                logging.info("Failed")
-                                sys.exit(1)
-                            else:
-                                time.sleep(iv)
-                                retry += 1
-
-                    driver.switch_to.frame(iframe)
-
-                    # detect error: "An internal server error occurred."
-                    # and "error-token: DYX47"
-                    error_token = driver.find_element_by_xpath("//b")
-                    if error_token:
-                        error_token_text = error_token.text
-                        if "error-token" in error_token.text:
-                            logging.error(
-                                "[FATAL ERROR] A website internal server error occurred.")
-                            logging.error(error_token_text)
-                            sys.exit(1)
-
-                    # get the element of table with metadata
-                    record_elem = wait.until(
-                        EC.presence_of_element_located(
-                            (By.XPATH, "//div[@class='packer']"))
-                    )
-
-                    # parse metadata
-                    m = getMetadata(record_elem)
-                    metadata.append(m)
-                    logging.info(f"{m['Accession ID']}\t{m['Virus name']}")
-
-                    # get back
-                    ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-                    time.sleep(1)
-                    driver.switch_to.default_content()
-
-                logging.info(f"Compeleted page# {page_num}.")
-                page_num += 1
-
-                # go to the next page
-                retry = 1
-                button_next_page = None
-                try:
-                    button_next_page = driver.find_element_by_xpath(
-                        f'//a[@page="{page_num}"]')
-                except:
-                    break
-
-                if button_next_page:
-                    logging.info(f"Entering page# {page_num}...")
-                    while retry <= rt:
-                        try:
-                            button_next_page.click()
-                            time.sleep(10)
-                            current_page = driver.find_element_by_xpath(
-                                '//span[@class="yui-pg-current-page yui-pg-page"]').text
-                            if current_page != str(page_num):
-                                raise
-                            else:
-                                break
-                        except:
-                            logging.info(f"retrying...#{retry} in {iv} sec(s)")
-                            if retry == rt:
-                                logging.error("Failed")
-                                sys.exit(1)
-                            else:
-                                time.sleep(iv)
-                                retry += 1
-
-            # writing metadata to JSON file
-            logging.info("Writing detail metadata...")
-            with open(GISAID_DTL_JASON, 'w') as outfile:
-                json.dump(metadata, outfile)
-
     # close driver
     driver.quit()
 
@@ -630,7 +518,6 @@ def main():
         argvs.timeout,
         argvs.retry,
         argvs.interval,
-        argvs.meta,
         argvs.nonextstraindata,
         argvs.ffbin
     )
