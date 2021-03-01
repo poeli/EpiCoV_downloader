@@ -5,6 +5,8 @@
 
 This is a GISAID downloader to retrieve all EpiCoV sequences and the table. The script utilizes Selenium to acess the GISAID website through a Firefox webdriver.
 
+> **_WARNING:_** By using this software you agree GISAID's [Terms of Use](https://www.gisaid.org/DAA) and reaffirm your understanding of these terms.
+
 ## Installation
 
 We provide a package file (environment.yml) to create a new environment (gisaid) using conda:
@@ -76,6 +78,5 @@ optional arguments:
   -i [INT], --interval [INT]
                         time interval between retries in second(s). Default is
                         3 seconds.
-  -m, --meta            download detail metadata (experimental, very slow)
   --normal              run firefox in normal mode.
 ```
