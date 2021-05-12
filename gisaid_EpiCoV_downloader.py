@@ -3,7 +3,7 @@
 __author__ = "Po-E Li, B10, LANL"
 __copyright__ = "LANL 2020"
 __license__ = "GPL"
-__version__ = "21.02.18"
+__version__ = "21.05.10"
 __email__ = "po-e@lanl.gov"
 
 import os
@@ -179,7 +179,7 @@ def download_gisaid_EpiCoV(
 
     # open GISAID
     logging.info("Opening website GISAID...")
-    driver.get('https://platform.gisaid.org/epi3/frontend')
+    driver.get('https://www.epicov.org/epi3/frontend')
     waiting_sys_timer(wait)
     logging.info(driver.title)
     assert 'GISAID' in driver.title
