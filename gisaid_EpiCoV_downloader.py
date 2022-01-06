@@ -208,6 +208,7 @@ def download_gisaid_EpiCoV(
         pd_button = wait.until(EC.element_to_be_clickable(
             (By.XPATH, "//div[@class='sys-actionbar-bar']//div[3]")))
         pd_button.click()
+
         waiting_sys_timer(wait)
 
         # have to click the first row twice to start the iframe
@@ -268,6 +269,99 @@ def download_gisaid_EpiCoV(
         driver.switch_to.default_content()
         fn = wait_downloaded_filename(wait, driver, 600)
         logging.info(f" -- downloaded to {fn}.")
+
+        waiting_sys_timer(wait)
+
+        logging.info("Downloading MSA full...")
+        driver.switch_to.frame(iframe_dl)
+        waiting_sys_timer(wait)
+        # click MSA full button
+        dl_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(text(), "MSA full")]')))
+        dl_button.click()
+        waiting_sys_timer(wait)
+        # waiting for REMINDER
+        iframe = waiting_for_iframe(wait, driver, rt, iv)
+        driver.switch_to.frame(iframe)
+        waiting_sys_timer(wait)
+        # agree terms and conditions
+        logging.info(" -- agreeing terms and conditions")
+        checkbox = driver.find_element_by_xpath('//input[@class="sys-event-hook"]')
+        checkbox.click()
+        waiting_sys_timer(wait)
+        # click download button
+        dl_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, '//button[contains(text(), "Download")]')))
+        dl_button.click()
+        waiting_sys_timer(wait)
+        logging.info(" -- downloading")
+        # Opening Firefox downloading window
+        driver.switch_to.default_content()
+        fn = wait_downloaded_filename(wait, driver, 600)
+        logging.info(f" -- downloaded to {fn}.")
+
+
+        waiting_sys_timer(wait)
+
+        logging.info("Downloading MSA unmasked...")
+        driver.switch_to.frame(iframe_dl)
+        waiting_sys_timer(wait)
+        # click MSA unmasked button
+        dl_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(text(), "MSA unmasked")]')))
+        dl_button.click()
+        waiting_sys_timer(wait)
+        # waiting for REMINDER
+        iframe = waiting_for_iframe(wait, driver, rt, iv)
+        driver.switch_to.frame(iframe)
+        waiting_sys_timer(wait)
+        # agree terms and conditions
+        logging.info(" -- agreeing terms and conditions")
+        checkbox = driver.find_element_by_xpath('//input[@class="sys-event-hook"]')
+        checkbox.click()
+        waiting_sys_timer(wait)
+        # click download button
+        dl_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, '//button[contains(text(), "Download")]')))
+        dl_button.click()
+        waiting_sys_timer(wait)
+        logging.info(" -- downloading")
+        # Opening Firefox downloading window
+        driver.switch_to.default_content()
+        fn = wait_downloaded_filename(wait, driver, 600)
+        logging.info(f" -- downloaded to {fn}.")
+
+
+        waiting_sys_timer(wait)
+
+        logging.info("Downloading MSA masked...")
+        driver.switch_to.frame(iframe_dl)
+        waiting_sys_timer(wait)
+        # click MSA masked button
+        dl_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(text(), "MSA masked")]')))
+        dl_button.click()
+        waiting_sys_timer(wait)
+        # waiting for REMINDER
+        iframe = waiting_for_iframe(wait, driver, rt, iv)
+        driver.switch_to.frame(iframe)
+        waiting_sys_timer(wait)
+        # agree terms and conditions
+        logging.info(" -- agreeing terms and conditions")
+        checkbox = driver.find_element_by_xpath('//input[@class="sys-event-hook"]')
+        checkbox.click()
+        waiting_sys_timer(wait)
+        # click download button
+        dl_button = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, '//button[contains(text(), "Download")]')))
+        dl_button.click()
+        waiting_sys_timer(wait)
+        logging.info(" -- downloading")
+        # Opening Firefox downloading window
+        driver.switch_to.default_content()
+        fn = wait_downloaded_filename(wait, driver, 600)
+        logging.info(f" -- downloaded to {fn}.")
+
 
         waiting_sys_timer(wait)
 
