@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 __author__ = "Po-E Li, B10, LANL"
-__copyright__ = "LANL 2020"
+__copyright__ = "LANL 2022"
 __license__ = "GPL"
-__version__ = "21.05.10"
+__version__ = "22.02.15"
 __email__ = "po-e@lanl.gov"
 
 import os
@@ -194,19 +194,19 @@ def download_gisaid_EpiCoV(
 
     waiting_sys_timer(wait)
 
-    # navigate to EpiFlu
-    logging.info("Navigating to EpiCoV...")
-    epicov_tab = driver.find_element_by_xpath("//div[@id='main_nav']//li[3]/a")
-    epicov_tab.click()
+    # # navigate to EpiFlu
+    # logging.info("Navigating to EpiCoV...")
+    # epicov_tab = driver.find_element_by_xpath("//div[@id='main_nav']//li[3]/a")
+    # epicov_tab.click()
 
-    waiting_sys_timer(wait)
+    # waiting_sys_timer(wait)
 
     # download nextstrain data
     if not nnd:
         # download from downloads section
         logging.info("Clicking downloads...")
         pd_button = wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//div[@class='sys-actionbar-bar']//div[3]")))
+            (By.XPATH, '//div[contains(text(), "Downloads")]')))
         pd_button.click()
         waiting_sys_timer(wait)
 
