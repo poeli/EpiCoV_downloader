@@ -33,7 +33,7 @@ def parse_params():
                           description="""Download EpiCoV sequences from GISAID. WARNING: By using this software you agree GISAID's Terms of Use and reaffirm your understanding of these terms.""")
 
     p.add_argument('-o', '--outdir',
-                   metavar='[STR]', type=str, required=False, default=None,
+                   metavar='[STR]', type=str, required=False,
                    help="Output directory")
 
     p.add_argument('-l', '--location',
@@ -88,6 +88,8 @@ def parse_params():
     args_parsed = p.parse_args()
     if not args_parsed.outdir:
         args_parsed.outdir = os.getcwd()
+        logging.info(f"Output directory set to {args_parsed.outdir}...")
+    
     return args_parsed
 
 
