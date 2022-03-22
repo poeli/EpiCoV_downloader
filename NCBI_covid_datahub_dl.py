@@ -132,10 +132,8 @@ def download_ncbi_datahub(
     options.set_preference("browser.download.folderList", 2)
     options.set_preference("browser.download.manager.showWhenStarting", False)
     options.set_preference("browser.download.dir", wd)
-    options.set_preference(
-        "browser.helperApps.neverAsk.saveToDisk", mime_types)
-    options.set_preference(
-        "plugin.disable_full_page_plugin_for_types", mime_types)
+    options.set_preference("browser.helperApps.neverAsk.saveToDisk", mime_types)
+    options.set_preference("plugin.disable_full_page_plugin_for_types", mime_types)
     options.set_preference("pdfjs.disabled", True)
 
     if ffbin:
@@ -205,7 +203,7 @@ def download_ncbi_datahub(
 
     # Opening Firefox downloading window
     fn = wait_downloaded_filename(wait, driver, 600)
-    logging.info(f" -- downloaded to {fn}.")
+    logging.info(f" -- downloaded")
 
     # close driver
     driver.quit()
@@ -221,14 +219,15 @@ def wait_downloaded_filename(wait, driver, waitTime=180):
     endTime = time.time()+waitTime
     while True:
         try:
-            #progress = driver.execute_script("return document.querySelector('.downloadContainer progress:first-of-type').value")
+            # progress = driver.execute_script("return document.querySelector('.downloadContainer progress:first-of-type').value")
             fileName = driver.execute_script("return document.querySelector('.downloadContainer description:first-of-type').value")
             dldetail = driver.execute_script("return document.querySelector('.downloadDetailsNormal').value")
+            logging.info(f" -- downloading to {fileName}")
 
             while "time left" in dldetail:
                 time.sleep(1)
                 dldetail = driver.execute_script("return document.querySelector('.downloadDetailsNormal').value")
-                #progress = driver.execute_script("return document.querySelector('.downloadContainer progress:first-of-type').value")
+                # progress = driver.execute_script("return document.querySelector('.downloadContainer progress:first-of-type').value")
 
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
@@ -238,6 +237,7 @@ def wait_downloaded_filename(wait, driver, waitTime=180):
             pass
         time.sleep(1)
         if time.time() > endTime:
+            logging.info(f" -- timeout")
             break
 
 def main():
