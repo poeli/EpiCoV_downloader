@@ -192,12 +192,13 @@ def download_ncbi_datahub(
     # dl_button = driver.find_element_by_xpath('/html/body/ngb-modal-window/div/div/div[2]/uswds-ncbi-app-muti-step-form/div/div/div/span[3]/form/div/div[1]/div[3]/div[1]/label')
     dl_button = driver.find_element_by_xpath('/html/body/ngb-modal-window/div/div/div[2]/uswds-ncbi-app-muti-step-form/div/div/div/span[3]//label[contains(text(), "Country")]')
     actions.move_to_element(dl_button).click()
+    actions.perform()
     # button Download
     dl_button = driver.find_element_by_xpath('/html/body/ngb-modal-window/div/div/div[2]/uswds-ncbi-app-muti-step-form/div/div/div/span[3]/button[2]')
-    actions.move_to_element(dl_button).click()
-    actions.perform()
+    dl_button.click()
+    #actions.move_to_element(dl_button).click()
 
-    time.sleep(3)
+    time.sleep(5)
 
     logging.info("Downloading...")
 
@@ -234,8 +235,10 @@ def wait_downloaded_filename(wait, driver, waitTime=180):
             time.sleep(2)
             return fileName
         except:
+            logging.info(f" -- retry in 1 sec")
+            time.sleep(1)
             pass
-        time.sleep(1)
+
         if time.time() > endTime:
             logging.info(f" -- timeout")
             break
