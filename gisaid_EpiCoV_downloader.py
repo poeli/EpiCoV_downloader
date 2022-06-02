@@ -3,7 +3,7 @@
 __author__ = "Po-E Li, B10, LANL"
 __copyright__ = "LANL 2022"
 __license__ = "GPL"
-__version__ = "22.02.15"
+__version__ = "22.06.01"
 __email__ = "po-e@lanl.gov"
 
 import os
@@ -194,12 +194,24 @@ def download_gisaid_EpiCoV(
 
     waiting_sys_timer(wait)
 
-    # # navigate to EpiFlu
-    # logging.info("Navigating to EpiCoV...")
-    # epicov_tab = driver.find_element_by_xpath("//div[@id='main_nav']//li[3]/a")
-    # epicov_tab.click()
+    # navigate to EpiFlu
+    logging.info("Navigating to EpiCoV...")
+    epicov_tab = wait.until(EC.element_to_be_clickable(
+        (By.XPATH, '//a[contains(text(), "EpiCoV™")]')))    
+    epicov_tab.click()
 
-    # waiting_sys_timer(wait)
+    waiting_sys_timer(wait)
+
+    # switch to iframe
+    logging.info("Close Audacity Instant window...")
+    iframe = waiting_for_iframe(wait, driver, rt, iv)
+    driver.switch_to.frame(iframe)
+    button = driver.find_element_by_xpath(
+        "//button[contains(text(), 'Close')]")
+    button.click()
+    waiting_sys_timer(wait)
+    driver.switch_to.default_content()
+
 
     # download nextstrain data
     if not nnd:
