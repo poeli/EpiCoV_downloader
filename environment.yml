@@ -4,6 +4,6 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - selenium
+  - selenium=4.2.0
   - firefox
-  - geckodriver=0.26.0
+  - geckodriver=0.30.0

@@ -17,6 +17,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -155,23 +156,25 @@ def download_gisaid_EpiCoV(
         pass
 
     logging.info("Opening browser...")
-    profile = webdriver.FirefoxProfile()
-    profile.set_preference("browser.download.folderList", 2)
-    profile.set_preference("browser.download.manager.showWhenStarting", False)
-    profile.set_preference("browser.download.dir", wd)
-    profile.set_preference(
-        "browser.helperApps.neverAsk.saveToDisk", mime_types)
-    profile.set_preference(
-        "plugin.disable_full_page_plugin_for_types", mime_types)
-    profile.set_preference("pdfjs.disabled", True)
-    profile.update_preferences()
-
     options = Options()
+
+    options.set_preference("browser.download.folderList", 2)
+    options.set_preference("browser.download.manager.showWhenStarting", False)
+    options.set_preference("browser.download.dir", wd)
+    options.set_preference("browser.helperApps.neverAsk.saveToDisk", mime_types)
+    options.set_preference("browser.startup.homepage", "about:blank")
+    options.set_preference("plugin.disable_full_page_plugin_for_types", mime_types)
+    options.set_preference("pdfjs.disabled", True)
+
     if not normal:
         options.headless = True
+    
+    serv = None
+    if ffbin:
+        options.binary_location = ffbin
+        serv = Service(ffbin)
 
-    driver = webdriver.Firefox(
-        firefox_profile=profile, options=options, firefox_binary=ffbin)
+    driver = webdriver.Firefox(options=options)
 
     # driverwait
     driver.implicitly_wait(30)
@@ -180,30 +183,31 @@ def download_gisaid_EpiCoV(
     # open GISAID
     logging.info("Opening website GISAID...")
     driver.get('https://www.epicov.org/epi3/frontend')
+
     waiting_sys_timer(wait)
     logging.info(driver.title)
     assert 'GISAID' in driver.title
 
     # login
     logging.info("Logining to GISAID...")
-    username = driver.find_element_by_name('login')
+    username = driver.find_element(by=By.NAME, value='login')
     username.send_keys(uname)
-    password = driver.find_element_by_name('password')
+    password = driver.find_element(by=By.NAME, value='password')
     password.send_keys(upass)
     driver.execute_script("return doLogin();")
 
     waiting_sys_timer(wait)
 
-    # navigate to EpiFlu
-    logging.info("Navigating to EpiCoV...")
-    epicov_tab = wait.until(EC.element_to_be_clickable(
-        (By.XPATH, '//a[contains(text(), "EpiCoV™")]')))    
-    epicov_tab.click()
+    # # navigate to EpiFlu
+    # logging.info("Navigating to EpiCoV...")
+    # epicov_tab = wait.until(EC.element_to_be_clickable(
+    #     (By.XPATH, '//a[contains(text(), "EpiCoV™")]')))    
+    # epicov_tab.click()
 
-    waiting_sys_timer(wait)
+    # waiting_sys_timer(wait)
 
     # switch to iframe
-    logging.info("Close Audacity Instant window...")
+    logging.info("Close AudacityInstant window...")
     iframe = waiting_for_iframe(wait, driver, rt, iv)
     driver.switch_to.frame(iframe)
     button = driver.find_element_by_xpath(
