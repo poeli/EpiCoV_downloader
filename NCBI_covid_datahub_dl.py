@@ -135,10 +135,12 @@ def download_ncbi_datahub(
     options.set_preference("browser.helperApps.neverAsk.saveToDisk", mime_types)
     options.set_preference("plugin.disable_full_page_plugin_for_types", mime_types)
     options.set_preference("pdfjs.disabled", True)
-
+    
+    serv = None
     if ffbin:
         options.binary_location = ffbin
-    
+        serv = Service(ffbin)
+
     driver = webdriver.Firefox(options=options)
 
     # driverwait
@@ -186,15 +188,15 @@ def download_ncbi_datahub(
 
     # checkbox SRA Accession
     # dl_button = driver.find_element_by_xpath('/html/body/ngb-modal-window/div/div/div[2]/uswds-ncbi-app-muti-step-form/div/div/div/span[3]/form/div/div[1]/div[1]/div[2]/label')
-    dl_button = driver.find_element_by_xpath('/html/body/ngb-modal-window/div/div/div[2]/uswds-ncbi-app-muti-step-form/div/div/div/span[3]//label[contains(text(), "SRA Accession")]')
+    dl_button = driver.find_element(by=By.XPATH, value='/html/body/ngb-modal-window/div/div/div[2]/uswds-ncbi-app-muti-step-form/div/div/div/span[3]//label[contains(text(), "SRA Accession")]')
     actions.move_to_element(dl_button).click()
     # checkbox Country
     # dl_button = driver.find_element_by_xpath('/html/body/ngb-modal-window/div/div/div[2]/uswds-ncbi-app-muti-step-form/div/div/div/span[3]/form/div/div[1]/div[3]/div[1]/label')
-    dl_button = driver.find_element_by_xpath('/html/body/ngb-modal-window/div/div/div[2]/uswds-ncbi-app-muti-step-form/div/div/div/span[3]//label[contains(text(), "Country")]')
+    dl_button = driver.find_element(by=By.XPATH, value='/html/body/ngb-modal-window/div/div/div[2]/uswds-ncbi-app-muti-step-form/div/div/div/span[3]//label[contains(text(), "Country")]')
     actions.move_to_element(dl_button).click()
     actions.perform()
     # button Download
-    dl_button = driver.find_element_by_xpath('/html/body/ngb-modal-window/div/div/div[2]/uswds-ncbi-app-muti-step-form/div/div/div/span[3]/button[2]')
+    dl_button = driver.find_element(by=By.XPATH, value='/html/body/ngb-modal-window/div/div/div[2]/uswds-ncbi-app-muti-step-form/div/div/div/span[3]/button[2]')
     dl_button.click()
     #actions.move_to_element(dl_button).click()
 
