@@ -3,7 +3,7 @@
 __author__ = "Po-E Li, B10, LANL"
 __copyright__ = "LANL 2022"
 __license__ = "GPL"
-__version__ = "22.06.01"
+__version__ = "22.06.21"
 __email__ = "po-e@lanl.gov"
 
 import os
@@ -206,15 +206,15 @@ def download_gisaid_EpiCoV(
 
     # waiting_sys_timer(wait)
 
-    # switch to iframe
-    logging.info("Close AudacityInstant window...")
-    iframe = waiting_for_iframe(wait, driver, rt, iv)
-    driver.switch_to.frame(iframe)
-    button = driver.find_element_by_xpath(
-        "//button[contains(text(), 'Close')]")
-    button.click()
-    waiting_sys_timer(wait)
-    driver.switch_to.default_content()
+    # # switch to iframe
+    # logging.info("Close AudacityInstant window...")
+    # iframe = waiting_for_iframe(wait, driver, rt, iv)
+    # driver.switch_to.frame(iframe)
+    # button = driver.find_element_by_xpath(
+    #     "//button[contains(text(), 'Close')]")
+    # button.click()
+    # waiting_sys_timer(wait)
+    # driver.switch_to.default_content()
 
 
     # download nextstrain data
